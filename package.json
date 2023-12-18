@@ -1,0 +1,16 @@
+{
+  "name": "@opentofu/get.opentofu.org",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "author": "",
+  "license": "MPL",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20231121.0",
+    "wrangler": "^3.21.0"
+  }
+}
