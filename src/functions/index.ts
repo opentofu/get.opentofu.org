@@ -7,7 +7,7 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
     const userAgent = context.request.headers.get("user-agent").toLowerCase()
     const url = new URL(context.request.url)
-    url.pathname = "/index.sh"
+    url.pathname = "/install.sh"
     const asset = await context.env.ASSETS.fetch(url)
     return new Response(asset.body, {
         status: 200,
