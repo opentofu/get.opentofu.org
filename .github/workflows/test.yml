@@ -1,0 +1,14 @@
+name: Test
+on:
+  pull_request:
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test
+        run: |
+          cd tests/linux
+          ./test-all.sh
