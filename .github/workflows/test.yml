@@ -1,0 +1,60 @@
+name: Test
+on:
+  pull_request:
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
+        method: [brew, repo, standalone]
+        shell: [ash, bash, dash, ksh, zsh]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
+      - name: Test
+        env:
+          DISTRO: ${{ matrix.distro }}
+          METHOD: ${{ matrix.method }}
+          SH: ${{ matrix.shell }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd tests/linux
+          ./test.sh
+  macos:
+    name: MacOS
+    runs-on: macos-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        method: [brew, standalone]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
+      - name: Test
+        run: |
+          cd tests/macos
+          ./${{ matrix.method }}.sh
+  widows:
+    name: Windows
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        method: [standalone]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
+      - name: Test
+        working-directory: tests\windows
+        run: .\test.ps1 -method "${{ matrix.method }}"
