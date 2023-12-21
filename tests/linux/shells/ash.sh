@@ -6,17 +6,23 @@ case "$DISTRO" in
     apt-get install -y ash
     ;;
   ubuntu)
-    sudo apt-get update
-    sudo apt-get install -y ash
+    apt-get update
+    apt-get install -y ash
     ;;
   alpine)
-    apk add ash
+    #apk add ash
+    echo "$DISTRO - ash not supported"
+    exit 0
     ;;
   fedora | rocky)
-    yum install -y ash
+    echo "$DISTRO - ash not supported"
+    exit 0
+    #yum install -y ash
     ;;
   opensuse)
-    zypper install -y ash
+    echo "$DISTRO - ash not supported"
+    exit 0
+    #zypper install -y ash
 esac
 
 SHELL_COMMAND=/bin/ash

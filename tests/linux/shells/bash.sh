@@ -5,7 +5,7 @@ case "$DISTRO" in
     apt-get install -y bash
     ;;
   ubuntu)
-    sudo apt-get install -y bash
+    apt-get install -y bash
     ;;
   alpine)
     apk add bash

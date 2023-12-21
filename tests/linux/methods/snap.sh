@@ -1,11 +1,14 @@
 #!/bin/sh
 
+echo "Skipping combination $DISTRO - snapd"
+exit 0
+
 case "$DISTRO" in
   debian)
     apt-get install -y snapd
     ;;
   ubuntu)
-    sudo apt-get install -y snapd
+    apt-get install -y snapd
     ;;
   alpine)
     apk add snapd

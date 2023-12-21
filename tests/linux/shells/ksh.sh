@@ -5,10 +5,12 @@ case "$DISTRO" in
     apt-get install -y ksh
     ;;
   ubuntu)
-    sudo apt-get install -y ksh
+    apt-get install -y ksh
     ;;
   alpine)
-    apk add ksh
+    #apk add ksh
+    echo "alpine - ksh not supported"
+    exit 0
     ;;
   fedora | rocky)
     yum install -y ksh

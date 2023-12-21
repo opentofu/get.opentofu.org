@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+#
 
 set -euo pipefail
 
@@ -23,16 +24,17 @@ if [ -z "${IMAGE}" ]; then
 fi
 
 CID=$(\
-docker create -tiq \
+docker create -tq \
    -v "$(realpath "$(pwd)/../../src"):/src" \
    -v "$(realpath "$(pwd)/../"):/tests" \
    -e "DISTRO=${DISTRO}" \
    -e "METHOD=${METHOD}" \
    -e "SH=${SH}" \
+   -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
    -w /tests/linux \
    "${IMAGE}" \
    /tests/linux/test-helper.sh \
 )
 
 trap 'docker rm --force "${CID}" 2>&1 >/dev/null' EXIT
-docker start -ai "${CID}"
+docker start -a "${CID}"
