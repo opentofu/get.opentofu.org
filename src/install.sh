@@ -29,7 +29,6 @@ if [ -t 1 ]; then
         red="$(tput setaf 1)"
         green="$(tput setaf 2)"
         yellow="$(tput setaf 3)"
-        bgyellow="$(tput setab 3)"
         blue="$(tput setaf 4)"
         magenta="$(tput setaf 5)"
         cyan="$(tput setaf 6)"
@@ -71,7 +70,7 @@ SKIP_VERIFY=0
 # region ZSH
 if [ -n "${ZSH_VERSION}" ]; then
   ## Enable POSIX-style word splitting:
-  setopt SH_WORD_SPLIT 2>&1 >/dev/null
+  setopt SH_WORD_SPLIT >/dev/null 2>&1
 fi
 # endregion
 
@@ -180,7 +179,7 @@ as_root() {
 
 # This function attempts to execute a function as the current user and switches to root if it fails.
 maybe_root() {
-  if ! "$@" 2>&1 >/dev/null; then
+  if ! "$@" >/dev/null 2>&1; then
     if ! as_root "$@"; then
       return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
     fi
@@ -651,6 +650,7 @@ install_portable() {
     log_error "Failed to create temporary directory"
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
+  # shellcheck disable=SC2064
   trap "rm -rf '${TEMPDIR}' || true" EXIT
 
   ZIPDIR="$(mktemp -d)"
@@ -658,6 +658,7 @@ install_portable() {
     log_error "Failed to create temporary directory"
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
+  # shellcheck disable=SC2064
   trap "rm -rf '${ZIPDIR}' || true" EXIT
 
   ZIPFILE="tofu_${OPENTOFU_VERSION}_${OS}_${ARCH}.zip"
@@ -723,7 +724,7 @@ install_portable() {
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
 
-  if ! maybe_root mv ${ZIPDIR}/* "${INSTALL_PATH}" 2>&1 >/dev/null; then
+  if ! maybe_root mv "${ZIPDIR}/*" "${INSTALL_PATH}" >/dev/null 2>&1; then
     log_error "Cannot move ${ZIPDIR} contents to ${INSTALL_PATH}. Please check the permissions on the target directory."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
