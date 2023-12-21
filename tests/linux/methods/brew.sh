@@ -1,5 +1,17 @@
 #!/bin/sh
 
+INSTALLDIR="$(mktemp -d)"
+LWD="$(pwd)"
+if [ -z "${INSTALLDIR}" ]; then
+  echo "Failed to create temporary directory for brew installation."
+  exit 1
+fi
+# shellcheck disable=SC2064
+trap "rm -rf '$INSTALLDIR" EXIT
+cd "$INSTALLDIR" || exit 1
+# shellcheck disable=SC2064
+trap "cd '$LWD'" EXIT
+
 case "$DISTRO" in
   debian)
     apt-get install -y git build-essential gcc procps curl file bash
