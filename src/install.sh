@@ -225,12 +225,12 @@ download_file() {
   if command_exists "wget"; then
     log_debug "Downloading using wget..."
     if [ "${IS_GITHUB}" -eq 1 ]; then
-      if ! wget -q --header="Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
+      if ! wget -q --header="Authorization: token ${GITHUB_TOKEN}" -O "$2" "$1"; then
         log_debug "Download failed."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     else
-      if ! wget -q -o "$2" "$1"; then
+      if ! wget -q -O "$2" "$1"; then
         log_debug "Download failed."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
@@ -502,8 +502,8 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
-  if ! as_root yum install -y tofu; then
-    log_error "Failed to install tofu via yum."
+  if ! as_root zypper install -y tofu; then
+    log_error "Failed to install tofu via zypper."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
   if ! tofu --version; then
