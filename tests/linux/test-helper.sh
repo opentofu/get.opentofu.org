@@ -16,21 +16,25 @@ if [ -z "${SH}" ]; then
 fi
 
 DEBUGLOG=$(mktemp)
+# shellcheck disable=SC2064
 trap "rm -rf '$DEBUGLOG'" EXIT
 
-. ./inits/${DISTRO}.sh 2>&1 >$DEBUGLOG
+# shellcheck disable=SC1090
+. "./inits/${DISTRO}.sh" >"$DEBUGLOG" 2>&1
 
-. ./methods/${METHOD}.sh 2>&1 >$DEBUGLOG
+# shellcheck disable=SC1090
+. "./methods/${METHOD}.sh" >"$DEBUGLOG" 2>&1
 if [ -z "${METHOD_NAME}" ]; then
   echo "Test framework bug: the METHOD_NAME variable is not set for the method ${METHOD}."
-  cat $DEBUGLOG
+  cat "$DEBUGLOG"
   exit 1
 fi
 
-. ./shells/${SH}.sh 2>&1 >$DEBUGLOG
+# shellcheck disable=SC1090
+. "./shells/${SH}.sh" >"$DEBUGLOG" 2>&1
 if [ -z "${SHELL_COMMAND}" ]; then
   echo "Test framework bug: the SHELL_COMMAND variable is not set for the shell ${SH}."
-  cat $DEBUGLOG
+  cat "$DEBUGLOG"
   exit 1
 fi
 

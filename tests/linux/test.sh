@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -euo pipefail
 
 if [ -z "${DISTRO}" ]; then
   echo "Please set the DISTRO environment variable."
@@ -15,7 +15,8 @@ if [ -z "${SH}" ]; then
   exit 1
 fi
 
-. ./distros/${DISTRO}.sh
+# shellcheck disable=SC1090
+. "./distros/${DISTRO}.sh"
 if [ -z "${IMAGE}" ]; then
     echo "Test framework bug: the IMAGE variable is not set for the distro ${DISTRO}."
     exit 1
@@ -23,8 +24,8 @@ fi
 
 CID=$(\
 docker create -tiq \
-   -v $(realpath "$(pwd)/../../src"):/src \
-   -v $(realpath "$(pwd)/../"):/tests \
+   -v "$(realpath "$(pwd)/../../src"):/src" \
+   -v "$(realpath "$(pwd)/../"):/tests" \
    -e "DISTRO=${DISTRO}" \
    -e "METHOD=${METHOD}" \
    -e "SH=${SH}" \
