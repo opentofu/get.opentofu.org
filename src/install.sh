@@ -216,17 +216,37 @@ download_file() {
     return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
   fi
   log_debug "Downloading URL ${1} to ${2}..."
+  IS_GITHUB=0
+  if [ -n "${GITHUB_TOKEN}" ]; then
+    if [ "$(echo "$2" | grep -c "https://api.github.com")" -ne 0 ]; then
+      IS_GITHUB=1
+    fi
+  fi
   if command_exists "wget"; then
     log_debug "Downloading using wget..."
-    if ! wget -q -o "$2" "$1"; then
-      log_debug "Download failed."
-      return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+    if [ "${IS_GITHUB}" -eq 1 ]; then
+      if ! wget -q --header="Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
+        log_debug "Download failed."
+        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+      fi
+    else
+      if ! wget -q -o "$2" "$1"; then
+        log_debug "Download failed."
+        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+      fi
     fi
   elif command_exists "curl"; then
     log_debug "Downloading using curl..."
-    if ! curl -fsSL -o "$2" "$1"; then
-      log_debug "Download failed."
-      return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+    if [ "${IS_GITHUB}" -eq 1 ]; then
+      if ! curl -fsSL -H "Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
+        log_debug "Download failed."
+        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+      fi
+    else
+      if ! curl -fsSL -o "$2" "$1"; then
+        log_debug "Download failed."
+        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+      fi
     fi
   else
     log_error "Neither wget nor curl are available on your system. Please install one of them to proceed."
