@@ -7,6 +7,7 @@ case "$DISTRO" in
     curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign_${LATEST_VERSION}_amd64.deb"
     dpkg -i cosign_${LATEST_VERSION}_amd64.deb
     rm cosign_${LATEST_VERSION}_amd64.deb
+    ;;
   ubuntu)
     sudo apt-get install -y curl unzip
     LATEST_VERSION=$(curl https://api.github.com/repos/sigstore/cosign/releases/latest | grep tag_name | cut -d : -f2 | tr -d "v\", ")

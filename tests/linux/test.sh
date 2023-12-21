@@ -33,5 +33,5 @@ docker create -tiq \
    /tests/linux/test-helper.sh \
 )
 
-trap 'docker rm --force ${CID}' EXIT
+trap 'docker rm --force "${CID}" 2>&1 >/dev/null' EXIT
 docker start -ai "${CID}"
