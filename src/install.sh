@@ -78,21 +78,21 @@ log_success() {
   if [ -z "$1" ]; then
     return
   fi
-  echo "${green}$1${normal}"
+  echo "${green}$1${normal}" 1>&2
 }
 
 log_warning() {
   if [ -z "$1" ]; then
     return
   fi
-  echo "${yellow}$1${normal}"
+  echo "${yellow}$1${normal}" 1>&2
 }
 
 log_info() {
   if [ -z "$1" ]; then
     return
   fi
-  echo "${cyan}$1${normal}"
+  echo "${cyan}$1${normal}" 1>&2
 }
 
 log_debug() {
@@ -102,14 +102,14 @@ log_debug() {
   if [ -z "${LOG_DEBUG}" ]; then
     return
   fi
-  echo "${gray}$1${normal}"
+  echo "${gray}$1${normal}" 1>&2
 }
 
 log_error() {
   if [ -z "$1" ]; then
     return
   fi
-  echo "${red}$1${normal}"
+  echo "${red}$1${normal}" 1>&2
 }
 
 # This function checks if the command specified in $1 exists.
@@ -218,7 +218,7 @@ download_file() {
   log_debug "Downloading URL ${1} to ${2}..."
   IS_GITHUB=0
   if [ -n "${GITHUB_TOKEN}" ]; then
-    if [ "$(echo "$2" | grep -c "https://api.github.com")" -ne 0 ]; then
+    if [ "$(echo "$1" | grep -c "api.github.com")" -ne 0 ]; then
       IS_GITHUB=1
     fi
   fi
@@ -744,7 +744,7 @@ install_portable() {
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
 
-  if ! maybe_root mv "${ZIPDIR}/*" "${INSTALL_PATH}" >/dev/null 2>&1; then
+  if ! maybe_root mv "${ZIPDIR}"/* "${INSTALL_PATH}" >/dev/null 2>&1; then
     log_error "Cannot move ${ZIPDIR} contents to ${INSTALL_PATH}. Please check the permissions on the target directory."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
