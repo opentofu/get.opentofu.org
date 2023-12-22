@@ -6,6 +6,7 @@ jobs:
     name: Linux
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: true
       matrix:
         distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
         method: [auto, brew, manual, portable, snap]
@@ -25,6 +26,7 @@ jobs:
     name: MacOS
     runs-on: macos-latest
     strategy:
+      fail-fast: true
       matrix:
         method: [auto, brew, portable]
     steps:
