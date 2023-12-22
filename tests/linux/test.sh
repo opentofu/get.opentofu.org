@@ -19,6 +19,10 @@ fi
 
 set -euo pipefail
 
+DOCKER_CREATE_OPTS=""
+# This string contains the default init command. This also switches the script over to the "exec" method.
+DOCKER_INIT=""
+UNSUPPORTED=0
 # shellcheck disable=SC1090
 . "./distros/${DISTRO}.sh"
 if [ -z "${IMAGE}" ]; then
@@ -26,23 +30,61 @@ if [ -z "${IMAGE}" ]; then
     exit 1
 fi
 
+# shellcheck disable=SC1090
+. "./methods/${METHOD}.sh"
+# shellcheck disable=SC1090
+. "./shells/${SH}.sh"
+
+if [ "${UNSUPPORTED}" -eq 1 ]; then
+  echo "Combination unsupported, skipping test."
+  exit 0
+fi
+
+INIT="-"
+if [ -n "${DOCKER_INIT}" ]; then
+  INIT="${DOCKER_INIT}"
+fi
 CID=$(\
 docker create -tq \
-   -v "$(realpath "$(pwd)/../../src"):/src" \
-   -v "$(realpath "$(pwd)/../"):/tests" \
-   -e "DISTRO=${DISTRO}" \
-   -e "METHOD=${METHOD}" \
-   -e "SH=${SH}" \
-   -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-   -w /tests/linux \
-   --tmpfs /run \
-   --tmpfs /run/lock \
-   --tmpfs /tmp \
-   --privileged \
-   -v /lib/modules:/lib/modules:ro \
-   "${IMAGE}" \
-   /tests/linux/test-helper.sh \
+  -v "$(realpath "$(pwd)/../../src"):/src" \
+  -v "$(realpath "$(pwd)/../"):/tests" \
+  -e "DISTRO=${DISTRO}" \
+  -e "METHOD=${METHOD}" \
+  -e "SH=${SH}" \
+  -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+  -w /tests/linux/in-container/ \
+  --entrypoint /tests/linux/in-container/test-helper.sh \
+  ${DOCKER_CREATE_OPTS} \
+  "${IMAGE}" \
+  ${INIT} \
 )
 
 trap 'docker rm --force "${CID}" 2>&1 >/dev/null' EXIT
-docker start -a "${CID}"
+if [ -n "${DOCKER_INIT}" ]; then
+  docker start "${CID}" >/dev/null
+  SETUP=0
+  echo "Waiting for container setup to complete..."
+  for i in $(seq 1 300); do
+    if [ $(docker logs "${CID}" | grep -c "Setup complete.") -ne 0 ]; then
+      SETUP=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "${SETUP}" -eq "0" ]; then
+    echo "Setup failed."
+    docker logs "${CID}"
+    exit 1
+  fi
+  docker exec -t \
+    -e "DISTRO=${DISTRO}" \
+    -e "METHOD=${METHOD}" \
+    -e "SH=${SH}" \
+    -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+    -e "SHELL_COMMAND=${SHELL_COMMAND}" \
+    -w /tests/linux/in-container/ \
+    "${CID}" \
+     /tests/linux/in-container/run-test.sh
+else
+  docker start -a "${CID}"
+fi

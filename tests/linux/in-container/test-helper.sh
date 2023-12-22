@@ -16,7 +16,7 @@ if [ -z "${SH}" ]; then
 fi
 
 # shellcheck disable=SC1090
-. "./inits/${DISTRO}.sh"
+. "./distros/${DISTRO}.sh"
 
 # shellcheck disable=SC1090
 . "./methods/${METHOD}.sh"
@@ -32,7 +32,9 @@ if [ -z "${SHELL_COMMAND}" ]; then
   exit 1
 fi
 
-set -x
-"${SHELL_COMMAND}" /src/install.sh --debug --install-method "${METHOD_NAME}"
-
-tofu --version
+if [ -n "${INIT}" ] && [ "${INIT}" != "-" ]; then
+  exec ${INIT}
+else
+  echo "Setup complete."
+  exec /tests/linux/in-container/run-test.sh
+fi
