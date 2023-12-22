@@ -1,7 +1,4 @@
 #!/bin/bash
-#
-
-set -euo pipefail
 
 if [ -z "${DISTRO}" ]; then
   echo "Please set the DISTRO environment variable."
@@ -15,6 +12,12 @@ if [ -z "${SH}" ]; then
   echo "Please set the SH environment variable."
   exit 1
 fi
+
+if [ -z "${GITHUB_TOKEN}" ]; then
+  GITHUB_TOKEN=""
+fi
+
+set -euo pipefail
 
 # shellcheck disable=SC1090
 . "./distros/${DISTRO}.sh"
