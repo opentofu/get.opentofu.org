@@ -5,20 +5,32 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
+        method: [auto, brew, manual, portable, snap]
+        shell: [ash, bash, dash, ksh, zsh]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
+        env:
+          DISTRO: ${{ matrix.distro }}
+          METHOD: ${{ matrix.method }}
+          SH: ${{ matrix.shell }}
         run: |
           cd tests/linux
-          ./test-all.sh
+          ./test.sh
   macos:
     name: MacOS
     runs-on: macos-latest
+    strategy:
+      matrix:
+        method: [auto, brew, portable]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
         run: |
           cd tests/macos
-          ./test.sh
+          ./${{ matrix.method }}.sh
