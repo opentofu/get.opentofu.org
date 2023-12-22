@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install cosign
+        run: brew install cosign
       - name: Test
         run: |
           cd tests/macos
