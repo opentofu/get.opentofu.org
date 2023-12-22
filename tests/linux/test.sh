@@ -35,6 +35,11 @@ docker create -tq \
    -e "SH=${SH}" \
    -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
    -w /tests/linux \
+   --tmpfs /run \
+   --tmpfs /run/lock \
+   --tmpfs /tmp \
+   --privileged \
+   -v /lib/modules:/lib/modules:ro \
    "${IMAGE}" \
    /tests/linux/test-helper.sh \
 )

@@ -20,8 +20,21 @@ export TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT=4
 export TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND=11
 export TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED=13
 
+bold=""
+normal=""
+red=""
+green=""
+yellow=""
+blue=""
+magenta=""
+cyan=""
+gray=""
 if [ -t 1 ]; then
-    colors=$(tput colors)
+    if command -v "$1" >/dev/null 2>&1; then
+      colors=$(tput colors)
+    else
+      colors=2
+    fi
 
     if [ "$colors" -ge 8 ]; then
         bold="$(tput bold)"
@@ -44,8 +57,8 @@ DEFAULT_SYMLINK_PATH=/usr/local/bin
 SYMLINK_PATH="${DEFAULT_SYMLINK_PATH}"
 DEFAULT_OPENTOFU_VERSION=latest
 OPENTOFU_VERSION="${DEFAULT_OPENTOFU_VERSION}"
-DEFAULT_PACKAGE_GPG_URL=https://get.opentofu.org/opentofu.gpg
-PACKAGE_GPG_URL="${DEFAULT_PACKAGE_GPG_URL}"
+DEFAULT_DEB_GPG_URL=https://get.opentofu.org/opentofu.gpg
+DEB_GPG_URL="${DEFAULT_DEB_GPG_URL}"
 DEFAULT_DEB_REPO_GPG_URL=https://packages.opentofu.org/opentofu/tofu/gpgkey
 DEB_REPO_GPG_URL="${DEFAULT_DEB_REPO_GPG_URL}"
 DEFAULT_DEB_REPO_URL=https://packages.opentofu.org/opentofu/tofu/any/
@@ -55,7 +68,12 @@ DEB_REPO_SUITE="${DEFAULT_DEB_REPO_SUITE}"
 DEFAULT_DEB_REPO_COMPONENTS=main
 DEB_REPO_COMPONENTS="${DEFAULT_DEB_REPO_COMPONENTS}"
 DEFAULT_RPM_REPO_URL=https://packages.opentofu.org/opentofu/tofu/rpm_any/rpm_any/
+
 RPM_REPO_URL=${DEFAULT_RPM_REPO_URL}
+DEFAULT_RPM_REPO_GPG_URL=https://packages.opentofu.org/opentofu/tofu/gpgkey
+DEFAULT_RPM_GPG_URL=https://get.opentofu.org/opentofu.asc
+RPM_GPG_URL="${DEFAULT_RPM_GPG_URL}"
+RPM_REPO_GPG_URL="${DEFAULT_RPM_REPO_GPG_URL}"
 #TODO once the package makes it into stable change this to "-"
 DEFAULT_APK_REPO_URL=https://dl-cdn.alpinelinux.org/alpine/edge/testing/
 APK_REPO_URL=${DEFAULT_APK_REPO_URL}
@@ -319,9 +337,9 @@ download_gpg() {
 
 # This is a helper function that downloads a GPG URL to the specified file.
 deb_download_gpg() {
-  PACKAGE_GPG_URL="${1}"
+  DEB_GPG_URL="${1}"
   GPG_FILE="${2}"
-  if [ -z "${PACKAGE_GPG_URL}" ]; then
+  if [ -z "${DEB_GPG_URL}" ]; then
     log_error "Bug: no GPG URL specified for deb_download_gpg."
     return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
   fi
@@ -329,8 +347,8 @@ deb_download_gpg() {
     log_error "Bug: no destination path specified for deb_download_gpg."
     return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
   fi
-  if ! download_gpg "${PACKAGE_GPG_URL}" "${GPG_FILE}" 1; then
-    log_error "Failed to download GPG key from ${PACKAGE_GPG_URL}."
+  if ! download_gpg "${DEB_GPG_URL}" "${GPG_FILE}" 1; then
+    log_error "Failed to download GPG key from ${DEB_GPG_URL}."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
   log_debug "Changing ownership and permissions of ${GPG_FILE}..."
@@ -402,9 +420,9 @@ install_deb() {
     log_debug "Created /etc/apt/keyrings."
 
     PACKAGE_GPG_FILE=/etc/apt/keyrings/opentofu.gpg
-    log_debug "Downloading the GPG key from ${PACKAGE_GPG_URL}.."
-    if ! deb_download_gpg "${PACKAGE_GPG_URL}" "${PACKAGE_GPG_FILE}"; then
-      log_error "Failed to download GPG key from ${PACKAGE_GPG_URL}."
+    log_debug "Downloading the GPG key from ${DEB_GPG_URL}.."
+    if ! deb_download_gpg "${DEB_GPG_URL}" "${PACKAGE_GPG_FILE}"; then
+      log_error "Failed to download GPG key from ${DEB_GPG_URL}."
       return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
     fi
     if [ -n "${DEB_REPO_GPG_URL}" ] && [ "${DEB_REPO_GPG_URL}" != "-" ]; then
@@ -471,10 +489,20 @@ install_zypper() {
   if ! command_exists "zypper"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
+  log_info "Installing OpenTofu using zypper..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
     GPGCHECK=1
+    GPG_URL="${RPM_GPG_URL}"
+    if [ "${RPM_REPO_GPG_URL}" != "-" ]; then
+      GPG_URL=$(cat <<EOF
+${GPG_URL}
+       ${RPM_REPO_GPG_URL}
+EOF
+)
+    fi
   else
     GPGCHECK=0
+    GPG_URL=""
   fi
   if ! as_root tee /etc/zypp/repos.d/opentofu.repo; then
     log_error "Failed to write /etc/zypp/repos.d/opentofu.repo"
@@ -483,10 +511,10 @@ install_zypper() {
 [opentofu]
 name=opentofu
 baseurl=${RPM_REPO_URL}\$basearch
-repo_gpgcheck=0
+repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${PACKAGE_GPG_URL}
+gpgkey=${GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
@@ -494,14 +522,28 @@ metadata_expire=300
 [opentofu-source]
 name=opentofu-source
 baseurl=${RPM_REPO_URL}SRPMS
-repo_gpgcheck=0
+repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${PACKAGE_GPG_URL}
+gpgkey=${GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
+  for GPG_SRC in $GPG_URL; do
+    log_debug "Importing GPG key from ${GPG_SRC}..."
+    if ! rpm --import "${GPG_SRC}"; then
+      log_error "Failed to import GPG key from ${GPG_SRC}."
+      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    fi
+  done
+  for REPO in opentofu opentofu-source; do
+    log_debug "Importing GPG key for repo $REPO into zypper..."
+    if ! as_root zypper --gpg-auto-import-keys refresh opentofu; then
+      log_error "Failed to auto-import GPG key for repo $REPO into zypper."
+      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    fi
+  done
   if ! as_root zypper install -y tofu; then
     log_error "Failed to install tofu via zypper."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
@@ -519,10 +561,20 @@ install_yum() {
   if ! command_exists "yum"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
+  log_info "Installing OpenTofu using yum..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
     GPGCHECK=1
+    GPG_URL="${RPM_GPG_URL}"
+    if [ "${RPM_REPO_GPG_URL}" != "-" ]; then
+      GPG_URL=$(cat <<EOF
+${GPG_URL}
+       ${RPM_REPO_GPG_URL}
+EOF
+)
+    fi
   else
     GPGCHECK=0
+    GPG_URL=""
   fi
   if ! as_root tee /etc/yum.repos.d/opentofu.repo; then
     log_error "Failed to write /etc/yum.repos.d/opentofu.repo"
@@ -531,10 +583,10 @@ install_yum() {
 [opentofu]
 name=opentofu
 baseurl=${RPM_REPO_URL}\$basearch
-repo_gpgcheck=0
+repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${PACKAGE_GPG_URL}
+gpgkey=${GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
@@ -542,14 +594,21 @@ metadata_expire=300
 [opentofu-source]
 name=opentofu-source
 baseurl=${RPM_REPO_URL}SRPMS
-repo_gpgcheck=0
+repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${PACKAGE_GPG_URL}
+gpgkey=${GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
+  for GPG_SRC in $GPG_URL; do
+    log_debug "Importing GPG key from ${GPG_SRC}..."
+    if ! rpm --import "${GPG_SRC}"; then
+      log_error "Failed to import GPG key from ${GPG_SRC}."
+      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    fi
+  done
   if ! as_root yum install -y tofu; then
     log_error "Failed to install tofu via yum."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
@@ -579,6 +638,7 @@ install_apk() {
   if ! command_exists "apk"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
+  log_info "Installing OpenTofu using APK..."
   if [ "${APK_REPO_URL}" != "-" ]; then
     APK_REPO_PARAM="--repository=${APK_REPO_URL}"
   else
@@ -600,7 +660,8 @@ install_snap() {
   if ! command_exists "snap"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
-  if ! snap install --classic opentofu; then
+  log_info "Installing OpenTofu using Snap..."
+  if ! as_root snap install --classic opentofu; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
   if ! tofu --version; then
@@ -616,6 +677,7 @@ install_brew() {
   if ! command_exists "brew"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
+  log_info "Installing OpenTofu using Homebrew..."
   if ! brew install opentofu; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
@@ -644,6 +706,8 @@ install_portable() {
       return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
     fi
   fi
+
+  log_info "Installing OpenTofu using the portable installation method..."
 
   if [ "$OPENTOFU_VERSION" = "latest" ]; then
     log_info "Determining latest OpenTofu version..."
@@ -798,8 +862,6 @@ ${bold}${blue}Usage:${normal} $(basename "$0") ${magenta}[OPTIONS]${normal}
 ${bold}${blue}OPTIONS for all installation methods:${normal}
 
   ${bold}-h|--help${normal}                     Print this help.
-  ${bold}--gpg-url ${magenta}URL${normal}                 The URL where the GPG signing key is located.
-                                (${bold}Default:${normal} ${magenta}${DEFAULT_PACKAGE_GPG_URL}${normal})
   ${bold}--root-method ${magenta}METHOD${normal}          The method to use to obtain root credentials.
                                 (${bold}One of:${normal} ${magenta}none${normal}, ${magenta}su${normal}, ${magenta}sudo${normal}, ${magenta}auto${normal}; ${bold}default:${normal} ${magenta}auto${normal})
   ${bold}--install-method ${magenta}METHOD${normal}       The installation method to use. Must be one of:
@@ -823,6 +885,8 @@ ${bold}${blue}OPTIONS for the Debian repository installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_REPO_SUITE}${normal})
   ${bold}--deb-components ${magenta}COMPONENTS${normal}   Debian repository components.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_REPO_COMPONENTS}${normal})
+  ${bold}--deb-gpg-url ${magenta}URL${normal}             The URL where the GPG signing key is located.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_GPG_URL}${normal})
   ${bold}--deb-repo-gpg-url ${magenta}URL${normal}        Sets the GPG key for the Debian repository.
                                 This is a workaround and may be removed in the future.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_REPO_GPG_URL}${normal}}
@@ -831,6 +895,11 @@ ${bold}${blue}OPTIONS for the RPM repository installation:${normal}
 
   ${bold}--rpm-url ${magenta}URL${normal}                 RPM repository URL.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_RPM_REPO_URL}${normal})
+  ${bold}--rpm-gpg-url ${magenta}URL${normal}             The URL where the GPG signing key is located.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_RPM_GPG_URL}${normal})
+  ${bold}--rpm-repo-gpg-url ${magenta}URL${normal}        Sets the GPG key for the RPM repository.
+                                This is a workaround and may be removed in the future.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_RPM_REPO_GPG_URL}${normal}}
 
 ${bold}${blue}OPTIONS for the Alpine repository installation:${normal}
 
@@ -938,15 +1007,15 @@ main() {
             ;;
         esac
         ;;
-      --gpg-url)
+      --deb-gpg-url)
         shift
         case $1 in
           "")
-            usage "--gpg-url requires an argument."
+            usage "--deb-gpg-url requires an argument."
             return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
             ;;
         *)
-            PACKAGE_GPG_URL="${1}"
+            DEB_GPG_URL="${1}"
             ;;
         esac
         ;;
@@ -1010,6 +1079,31 @@ main() {
             ;;
         esac
         ;;
+      --rpm-gpg-url)
+        shift
+        case $1 in
+          "")
+            usage "--rpm-gpg-url requires an argument."
+            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            ;;
+        *)
+            RPM_GPG_URL="${1}"
+            ;;
+        esac
+        ;;
+      --rpm-repo-gpg-url)
+        shift
+        case $1 in
+          "")
+            usage "--rpm-repo-gpg-url requires an argument."
+            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            ;;
+        *)
+            RPM_REPO_GPG_URL="${1}"
+            ;;
+        esac
+        ;;
+
       --cosign-path)
         shift
         case $1 in
