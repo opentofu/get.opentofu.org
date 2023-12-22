@@ -5,7 +5,7 @@ case "$DISTRO" in
     apt-get install -y zsh
     ;;
   ubuntu)
-    sudo apt-get install -y zsh
+    apt-get install -y zsh
     ;;
   alpine)
     apk add zsh

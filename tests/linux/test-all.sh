@@ -1,47 +1,36 @@
 #!/bin/bash
 
-SUMMARYFILE=$(mktemp)
-trap "rm -rf '${SUMMARYFILE}'" EXIT
-FINAL_EXIT_CODE=0
-printf "%-20s %-20s %-20s %s\n" "Distro" "Method" "Shell" "Result" >>$SUMMARYFILE
+LOGROOT="./logs"
+rm -rf $LOGROOT
+mkdir $LOGROOT
+
+function run_case() {
+	export DISTRO="$1" METHOD="$2" SH="$3" 
+	echo "Starting DISTRO=$DISTRO METHOD=$METHOD SH=$SH"
+
+	LOGFILE="${LOGROOT}/results.${DISTRO}.${METHOD}.${SH}.log"
+        ./test.sh &>$LOGFILE
+        EXIT_CODE=$?
+
+	echo "Completed DISTRO=$DISTRO METHOD=$METHOD SH=$SH with exit code $EXIT_CODE"
+}
+
+export -f run_case
+
+cases=""
+
 for DISTROFILE in distros/*.sh; do
+#for DISTROFILE in alpine; do
   DISTRO=$(basename "${DISTROFILE}" | sed -e 's/\.sh//')
+  echo $DISTRO
   for METHODFILE in methods/*.sh; do
+  #for METHODFILE in brew; do
     METHOD=$(basename "${METHODFILE}" | sed -e 's/\.sh//')
     for SHFILE in shells/*.sh; do
+    #for SHFILE in bash; do
       SH=$(basename "${SHFILE}" | sed -e 's/\.sh//')
-
-      (
-        LOGFILE=$(mktemp)
-        trap "rm -rf '$LOGFILE'" EXIT
-        DISTRO="${DISTRO}" METHOD="${METHOD}" SH="${SH}" ./test.sh 2>&1 >$LOGFILE
-        EXIT_CODE=$?
-        if [ "$?" -eq "0" ]; then
-          echo -e "::group::\033[32m✅  ${DISTRO} ${METHOD} ${SH}\033[0m"
-          printf "%-20s %-20s %-20s %s\n" "${DISTRO}" "${METHOD}" "${SH}" "✅" >>$SUMMARYFILE
-        else
-          echo -e "::group::\033[31m❌  ${DISTRO} ${METHOD} ${SH} (exit code: ${EXIT_CODE})\033[0m"
-          printf "%-20s %-20s %-20s %s\n" "${DISTRO}" "${METHOD}" "${SH}" "❌" >>$SUMMARYFILE
-        fi
-        cat $LOGFILE
-        echo "::endgroup::"
-        exit "${EXIT_CODE}"
-      )
-      EXIT_CODE=$?
-
-      if [ "${EXIT_CODE}" -ne "0" ]; then
-        FINAL_EXIT_CODE=${EXIT_CODE}
-      fi
+      run_case $DISTRO $METHOD $SH &
     done
   done
+  wait
 done
-
-if [ "${FINAL_EXIT_CODE}" -eq 0 ]; then
-  echo -e "::group::\033[32m✅  Summary\033[0m"
-else
-  echo -e "::group::\033[32m❌  Summary\033[0m"
-fi
-cat "$SUMMARYFILE"
-echo "::endgroup::"
-
-exit $FINAL_EXIT_CODE
