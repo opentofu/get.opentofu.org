@@ -873,7 +873,7 @@ ${bold}${blue}OPTIONS for all installation methods:${normal}
                                     ${magenta}snap${normal}      Snapcraft installation
                                     ${magenta}brew${normal}      Homebrew installation
                                     ${magenta}portable${normal}  Portable installation
-  ${bold}--skip-verify${normal}                 Skip GPG or cosign integrity verification
+  ${bold}--skip-verify${normal}                 Skip GPG or cosign integrity verification.
                                 (${bold}${red}not recommended${normal}).
   ${bold}--debug${normal}                       Enable debug logging.
 
@@ -921,6 +921,11 @@ ${bold}${blue}OPTIONS for the portable installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_COSIGN_OIDC_ISSUER}${normal})
   ${bold}--cosign-identity ${magenta}IDENTITY${normal}    Cosign certificate identity.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_COSIGN_IDENTITY}${normal})
+
+  ${bold}Note:${normal} If you do not specify the OpenTofu version, the script calls the GitHub API.
+  This API is rate-limited. If you encounter problems, please create a GitHub token at
+  https://github.com/settings/tokens without any permissions and set the ${bold}GITHUB_TOKEN${normal}
+  environment variable. This will increase the rate limit.
 
 ${bold}${blue}Exit codes:${normal}
 
