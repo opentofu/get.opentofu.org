@@ -2,6 +2,6 @@
 
 set -ex
 
-../../src/install.sh --debug
+../../src/install-opentofu.sh --debug
 
 tofu --version

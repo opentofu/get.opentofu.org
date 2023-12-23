@@ -2,6 +2,6 @@
 
 set -ex
 
-../../src/install.sh --debug --install-method "portable"
+../../src/install-opentofu.sh --debug --install-method "portable"
 
 tofu --version

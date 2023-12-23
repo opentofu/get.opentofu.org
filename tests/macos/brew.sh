@@ -2,6 +2,6 @@
 
 set -ex
 
-../../src/install.sh --debug --install-method "brew"
+../../src/install-opentofu.sh --debug --install-method "brew"
 
 tofu --version

@@ -1,15 +1,8 @@
 #!/bin/sh
 
-# This is a combined POSIX/PowerShell script for installing OpenTofu. The Powershell part is below.
+# OpenTofu Installer
 #
-# Note: do not use #> in the POSIX part.
-#
-# See https://stackoverflow.com/questions/39421131/is-it-possible-to-write-one-script-that-runs-in-bash-shell-and-powershell
-
-echo --% >/dev/null;: ' | out-null
-<#'
-
-# region POSIX
+# This script installs OpenTofu via any of the supported methods.
 
 export TOFU_INSTALL_EXIT_CODE_OK=0
 export TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED=1
@@ -1195,13 +1188,4 @@ main() {
 }
 
 main "$@"
-# This exit is important! It guards the Powershell part below!
 exit $?
-
-# endregion
-
-#>
-
-# region Powershell
-
-# endregion
