@@ -55,6 +55,7 @@ param(
 )
 
 $scriptName = $myInvocation.InvocationName
+$progressPreference = 'silentlyContinue'
 
 $esc = [char]27
 $bold = "$esc[1m"
