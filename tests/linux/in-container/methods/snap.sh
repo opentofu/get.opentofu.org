@@ -7,7 +7,8 @@ case "$DISTRO" in
     apt-get install -y snapd systemd
     ;;
   ubuntu)
-    apt-get install -y snapd systemd
+    apt-get install -y snapd systemd snap fuse
+    systemctl enable snapd
     ;;
   alpine)
     # Not supported

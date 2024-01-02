@@ -32,6 +32,7 @@ if [ -z "${SHELL_COMMAND}" ]; then
   exit 1
 fi
 
+INIT=$1
 if [ -n "${INIT}" ] && [ "${INIT}" != "-" ]; then
   exec ${INIT}
 else
