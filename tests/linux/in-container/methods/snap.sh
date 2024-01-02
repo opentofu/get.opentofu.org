@@ -2,6 +2,9 @@
 
 set -e
 
+# Unusupported for now.
+export UNSUPPORTED=1
+
 case "$DISTRO" in
   debian)
     apt-get install -y snapd systemd
