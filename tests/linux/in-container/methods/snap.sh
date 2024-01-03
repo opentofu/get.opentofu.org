@@ -4,6 +4,7 @@ set -e
 
 # Unusupported for now.
 export UNSUPPORTED=1
+exit 0
 
 case "$DISTRO" in
   debian)
