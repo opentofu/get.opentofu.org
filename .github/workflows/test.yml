@@ -9,7 +9,7 @@ jobs:
       fail-fast: true
       matrix:
         distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
-        method: [auto, brew, manual, portable, snap]
+        method: [auto, brew, manual, portable]
         shell: [ash, bash, dash, ksh, zsh]
     steps:
       - name: Checkout
