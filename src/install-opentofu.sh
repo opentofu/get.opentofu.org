@@ -777,7 +777,7 @@ install_portable() {
       fi
     fi
 
-    if ! cosign verify-blob \
+    if ! $COSIGN_PATH verify-blob \
       --certificate-identity "${IDENTITY}" \
       --signature "${TEMPDIR}/${SIGFILE}" \
       --certificate "${TEMPDIR}/${CERTFILE}" \
