@@ -8,21 +8,17 @@ The installation method to test.
 Perform setup for the installation method.
 #>
 param(
-    [Parameter(Mandatory = $false)]
-    [ValidateSet('auto','winget','portable')]
-    [string]$method = "auto",
-    [Parameter(Mandatory = $false)]
-    [bool]$setup = $false
+    [Parameter(Mandatory = $true)]
+    [ValidateSet('standalone')]
+    [string]$method
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $PSDefaultParameterValues['*:ErrorAction']='Stop'
 
-if ($setup) {
-    & ". .\methods\${method}.ps1"
-}
+& ".\in-sandbox\methods\${method}.ps1"
 
-..\..\src\install-opentofu.ps1 -installMethod "${method}"
+& '..\..\src\install-opentofu.ps1' -installMethod "${method}"
 
 tofu --version

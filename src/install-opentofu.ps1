@@ -13,19 +13,19 @@ Show a more detailed help.
 .PARAMETER installMethod
 The installation method to use. Must be one of:
 - winget
-- portable
+- standalone
 .PARAMETER installPath
-Installs OpenTofu to the specified path. (Portable installation only.)
+Installs OpenTofu to the specified path. (Standalone installation only.)
 .PARAMETER opentofuVersion
-Installs the specified OpenTofu version. (Portable installation only.)
+Installs the specified OpenTofu version. (Standalone installation only.)
 .PARAMETER cosignPath
-Path to cosign. (Portable installation only.)
+Path to cosign. (Standalone installation only.)
 .PARAMETER cosignOidcIssuer
-OIDC issuer for cosign signatures. (Portable installation only.)
+OIDC issuer for cosign signatures. (Standalone installation only.)
 .PARAMETER cosignIdentity
-Identity for the cosign signature. (Portable installation only.)
+Identity for the cosign signature. (Standalone installation only.)
 .PARAMETER skipVerify
-Skip cosign integrity verification. (Portable installation only; not recommended.)
+Skip cosign integrity verification. (Standalone installation only; not recommended.)
 .Parameter skipChangePath
 Skip changing the user/system PATH variable to include OpenTofu.
 .Parameter allUsers
@@ -35,7 +35,7 @@ Internal parameter to use for continuing with elevated privileges. Do not use.
 .Parameter internalZipFile
 Internal parameter to use for continuing with elevated privileges. Do not use.
 .EXAMPLE
-PS> .\install-opentofu.ps1 -installMethod portable
+PS> .\install-opentofu.ps1 -installMethod standalone
 #>
 param(
     [Parameter(Mandatory = $false)]
@@ -156,21 +156,6 @@ function logWarning() {
     Write-Output "${orange}${message}${normal}"
 }
 
-function installWinget() {
-    logInfo "Attempting winget installation..."
-
-    $wingetError = "Winget is not installed but required for the winget installation. Please install Winget, provide the path to winget.exe in the -wingetPath parameter, or select a different installation method. See https://learn.microsoft.com/en-us/windows/package-manager/winget/ for details about winget."
-    try {
-        $ErrorActionPreference = 'stop'
-        if(!(Get-Command )){
-            throw [InstallMethodNotSupportedException]::new($wingetError)
-        }
-    } catch {
-        throw [InstallMethodNotSupportedException]::new($wingetError)
-    }
-    throw [InstallMethodNotSupportedException]::new("Winget installation is not currently supported.")
-}
-
 function tempdir() {
     $tempPath = [System.IO.Path]::GetTempPath()
     $randomName = [System.IO.Path]::GetRandomFileName()
@@ -178,7 +163,7 @@ function tempdir() {
     New-Item -Path $path -ItemType directory
 }
 
-function unpackPortable() {
+function unpackStandalone() {
     logInfo "Unpacking ZIP file to $installPath..."
     try
     {
@@ -205,20 +190,37 @@ function unpackPortable() {
     {
         $global:ProgressPreference = $prevProgressPreference
     }
+
+    try {
+        if ($allUsers) {
+            $target = [EnvironmentVariableTarget]::Machine
+        } else {
+            $target = [EnvironmentVariableTarget]::User
+        }
+        $currentPath = [Environment]::GetEnvironmentVariable("Path", $target)
+        if (!($currentPath.Contains($installPath))) {
+            [Environment]::SetEnvironmentVariable("Path", $currentPath + ";${installPath}", $target)
+        }
+    }
+    catch
+    {
+        $msg = $_.ToString()
+        throw [InstallFailedException]::new("Failed to set path. (${msg})")
+    }
 }
 
-function installPortable() {
+function installStandalone() {
     if ($internalContinue) {
-        logInfo "Continuing portable installation..."
-        unpackPortable
+        logInfo "Continuing standalone installation..."
+        unpackStandalone
         return
     }
 
-    logInfo "Performing portable installation to ${installPath}..."
+    logInfo "Performing standalone installation to ${installPath}..."
 
     if (!$skipVerify) {
         logInfo("Checking if cosign is available...")
-        $cosignError = "Cosign is not installed but required for the portable installation. Please install cosign / provide the cosign path with the -cosignPath parameter, disable integrity verification with -skipVerify (not recommended), or select a different installation method."
+        $cosignError = "Cosign is not installed but required for the standalone installation. Please install cosign / provide the cosign path with the -cosignPath parameter, disable integrity verification with -skipVerify (not recommended), or select a different installation method."
         try {
             $ErrorActionPreference = 'stop'
             if(!(Get-Command $cosignPath)){
@@ -324,10 +326,23 @@ function installPortable() {
             (New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
         )
         {
+            # Note on this section: we are requesting elevated privileges via UAC. Unfortunately, this is only possible
+            # by launching the current script again as Administrator. This can cause some weird parsing bugs in
+            # conjunction with Start-Process and the "powershell" command. (The parameter separation disappears.)
+            # Also note that when using Start-Process with RunAs, it is not possible to pass environment variables.
+            # (The documentation is lying!)
+            #
+            # TL;DR: Make sure to MANUALLY test privilege elevation if you change this as we can't test UAC in CI! Make
+            # sure to test with paths containing spaces too! Did I mention to test this? Test it. I'm serious.
+
             logInfo "Unpacking with elevated privileges..."
             $logDir = tempdir
-            # TODO logging redirect
-            $argList = @("-NonInteractive", "-File", ($scriptCommand | escapePathArgument), "-internalContinue", "-installMethod", "portable", "-installPath", ($installPath | escapePathArgument), "-internalZipFile", ($internalZipFile | escapePathArgument))
+            # TODO capture the log output of the shell running as admin and clean up afterwards.
+            $argList = @("-NonInteractive", "-File", ($scriptCommand | escapePathArgument), "-internalContinue", "-allUsers", "-installMethod", "standalone", "-installPath", ($installPath | escapePathArgument), "-internalZipFile", ($internalZipFile | escapePathArgument))
+            if ($skipChangePath)
+            {
+                $argList += "-skipChangePath"
+            }
             $subprocess = Start-Process `
                 -Verb RunAs `
                 -WorkingDirectory (Get-Location) `
@@ -343,11 +358,18 @@ function installPortable() {
         else
         {
             logInfo "Unpacking with current privileges..."
-            unpackPortable
+            unpackStandalone
         }
-        logInfo "Unpacking complete"
+        logInfo "Unpacking complete."
+
+        $tofuPath = Join-Path $installPath "tofu.exe"
+        logInfo "OpenTofu is now available at ${tofuPath}."
+
+        if (!$skipChangePath) {
+            $Env:PATH = "${Env:PATH};$installPath"
+        }
     } finally {
-        for ($i = 0; $i -le $dlFiles.Length; $i++) {
+        for ($i = 0; $i -le ($dlFiles.Length - 1); $i++) {
             $target = Join-Path $tempPath $dlFiles[$i]
             try
             {
@@ -379,15 +401,14 @@ ${bold}${blue}OPTIONS for all installation methods:${normal}
   ${bold}-help${normal}                         Print this help.
   ${bold}-installMethod ${magenta}METHOD${normal}         The installation method to use. (${red}required${normal})
                                 Must be one of:
-                                    ${magenta}portable${normal}  Portable installation
-                                    ${magenta}winget${normal}    Winget installation
+                                    ${magenta}standalone${normal}  Standalone installation
   ${bold}-allUsers${normal}                     Install for all users with elevated privileges.
   ${bold}-skipChangePath${normal}               Skip changing the user/system path to include the OpenTofu path.
   ${bold}-skipVerify${normal}                   Skip cosign integrity verification.
                                 (${bold}${red}not recommended${normal}).
   ${bold}-debug${normal}                        Enable debug logging.
 
-${bold}${blue}OPTIONS for the portable installation:${normal}
+${bold}${blue}OPTIONS for the standalone installation:${normal}
 
   ${bold}-opentofuVersion ${magenta}VERSION${normal}      Installs the specified OpenTofu version.
                                 (${bold}Default:${normal} ${magenta}${defaultOpenTofuVersion}${normal})
@@ -410,16 +431,6 @@ ${bold}${blue}OPTIONS for the portable installation:${normal}
   of the downloaded binaries by default. Please install cosign or disable signature
   verification by specifying -skipVerify to disable it (not recommended).
   See https://docs.sigstore.dev/system_config/installation/ for details.
-
-${bold}${blue}OPTIONS for the winget installation:${normal}
-
-    ${bold}-wingetPath ${magenta}PATH${normal}              Path to winget. (${bold}Default:${normal} ${magenta}${defaultWingetPath}${normal})
-
-  ${bold}Note:${normal} You must install winget in order to use this installation method.
-  See https://learn.microsoft.com/en-us/windows/package-manager/winget/ for details.
-
-  ${bold}Note:${normal} The winget installation method is maintained by the OpenTofu community.
-  Bugfixes are provided on a best-effort basis.
 
 ${bold}${blue}Exit codes:${normal}
 
@@ -446,11 +457,8 @@ try
         "" {
             throw [InvalidArgumentException]::new("Please select an installation method by specifying the -installMethod parameter.")
         }
-        "winget" {
-            installWinget
-        }
-        "portable" {
-            installPortable
+        "standalone" {
+            installStandalone
         }
         default {
             throw [InvalidArgumentException]::new("Invalid value for -installMethod: ${installMethod}")

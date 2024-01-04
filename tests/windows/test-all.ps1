@@ -11,7 +11,7 @@ param(
     [bool]$sandbox = $true
 )
 
-$methods = @["auto", "winget", "portable"]
+$methods = @("standalone")
 
 for ($i = 0; $i -lt $methods.Length; $i++) {
     $method = $methods[$i]

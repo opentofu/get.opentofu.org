@@ -11,11 +11,13 @@ jobs:
       fail-fast: true
       matrix:
         distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
-        method: [auto, brew, manual, portable]
+        method: [brew, manual, standalone]
         shell: [ash, bash, dash, ksh, zsh]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
       - name: Test
         env:
           DISTRO: ${{ matrix.distro }}
@@ -31,12 +33,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        method: [auto, brew, portable]
+        method: [brew, standalone]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install cosign
-        run: brew install cosign
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
       - name: Test
         run: |
           cd tests/macos
@@ -47,10 +49,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        method: [auto, winget, portable]
+        method: [standalone]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
       - name: Test
         working-directory: tests\windows
         run: .\test.ps1 -method "${{ matrix.method }}"

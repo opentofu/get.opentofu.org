@@ -681,15 +681,15 @@ install_brew() {
   return $TOFU_INSTALL_EXIT_CODE_OK
 }
 
-# This function installs OpenTofu as a portable installation. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED if the installation
+# This function installs OpenTofu as a standalone installation. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED if the installation
 # was unsuccessful.
-install_portable() {
+install_standalone() {
   if ! download_tool_exists; then
     log_error "Neither wget nor curl are available on your system. Please install at least one of them to proceed."
     return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
   fi
   if ! command_exists "unzip"; then
-    log_warning "Unzip is missing, please install it to use the portable installation method."
+    log_warning "Unzip is missing, please install it to use the standalone installation method."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
@@ -700,7 +700,7 @@ install_portable() {
     fi
   fi
 
-  log_info "Installing OpenTofu using the portable installation method..."
+  log_info "Installing OpenTofu using the standalone installation method..."
 
   if [ "$OPENTOFU_VERSION" = "latest" ]; then
     log_info "Determining latest OpenTofu version..."
@@ -832,7 +832,7 @@ install_portable() {
 # This function iterates through all installation methods and attempts to execute them. If the method is not supported
 # it moves on to the next one.
 install_auto() {
-  for install_func in install_deb install_rpm install_apk install_snap install_brew install_portable; do
+  for install_func in install_deb install_rpm install_apk install_snap install_brew install_standalone; do
     $install_func
     RETURN_CODE=$?
     if [ $RETURN_CODE -eq $TOFU_INSTALL_EXIT_CODE_OK ]; then
@@ -857,15 +857,14 @@ ${bold}${blue}OPTIONS for all installation methods:${normal}
   ${bold}-h|--help${normal}                     Print this help.
   ${bold}--root-method ${magenta}METHOD${normal}          The method to use to obtain root credentials.
                                 (${bold}One of:${normal} ${magenta}none${normal}, ${magenta}su${normal}, ${magenta}sudo${normal}, ${magenta}auto${normal}; ${bold}default:${normal} ${magenta}auto${normal})
-  ${bold}--install-method ${magenta}METHOD${normal}       The installation method to use. Must be one of:
-                                    ${magenta}auto${normal}      Automatically select installation
-                                              method (${bold}default${normal})
+  ${bold}--install-method ${magenta}METHOD${normal}       The installation method to use. (${red}required${normal})
+                                Must be one of:
                                     ${magenta}deb${normal}       Debian repository installation
                                     ${magenta}rpm${normal}       RPM repository installation
                                     ${magenta}apk${normal}       APK (Alpine) repository installation
                                     ${magenta}snap${normal}      Snapcraft installation
                                     ${magenta}brew${normal}      Homebrew installation
-                                    ${magenta}portable${normal}  Portable installation
+                                    ${magenta}standalone${normal}  Standalone installation
   ${bold}--skip-verify${normal}                 Skip GPG or cosign integrity verification.
                                 (${bold}${red}not recommended${normal}).
   ${bold}--debug${normal}                       Enable debug logging.
@@ -900,7 +899,7 @@ ${bold}${blue}OPTIONS for the Alpine repository installation:${normal}
                                 the included packages.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_APK_REPO_URL}${normal})
 
-${bold}${blue}OPTIONS for the portable installation:${normal}
+${bold}${blue}OPTIONS for the standalone installation:${normal}
 
   ${bold}--opentofu-version ${magenta}VERSION${normal}    Installs the specified OpenTofu version.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_OPENTOFU_VERSION}${normal})
@@ -967,7 +966,7 @@ main() {
       --install-method)
         shift
         case $1 in
-          auto|deb|rpm|apk|snap|brew|portable)
+          auto|deb|rpm|apk|snap|brew|standalone)
             INSTALL_METHOD=$1
             ;;
           "")
@@ -1177,8 +1176,8 @@ main() {
     install_brew
     return $?
     ;;
-  portable)
-    install_portable
+  standalone)
+    install_standalone
     return $?
     ;;
   *)
