@@ -68,8 +68,10 @@ DEFAULT_RPM_GPG_URL=https://get.opentofu.org/opentofu.asc
 RPM_GPG_URL="${DEFAULT_RPM_GPG_URL}"
 RPM_REPO_GPG_URL="${DEFAULT_RPM_REPO_GPG_URL}"
 #TODO once the package makes it into stable change this to "-"
-DEFAULT_APK_REPO_URL=https://dl-cdn.alpinelinux.org/alpine/edge/testing/
+DEFAULT_APK_REPO_URL="@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing"
 APK_REPO_URL=${DEFAULT_APK_REPO_URL}
+DEFAULT_APK_PACKAGE="opentofu@testing"
+APK_PACKAGE="${DEFAULT_APK_PACKAGE}"
 DEFAULT_COSIGN_PATH=cosign
 COSIGN_PATH=${DEFAULT_COSIGN_PATH}
 DEFAULT_COSIGN_IDENTITY=autodetect
@@ -639,7 +641,7 @@ install_apk() {
   else
     APK_REPO_PARAM=""
   fi
-  if ! apk add opentofu "${APK_REPO_PARAM}"; then
+  if ! apk add "${APK_PACKAGE}" "${APK_REPO_PARAM}"; then
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
   if ! tofu --version; then
@@ -922,6 +924,8 @@ ${bold}${blue}OPTIONS for the Alpine repository installation:${normal}
   ${bold}--apk-repo ${magenta}URL${normal}                APK repository URL. Pass ${bold}-${normal} to install from
                                 the included packages.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_APK_REPO_URL}${normal})
+  ${bold}--apk-package ${magenta}PACKAGE${normal}         APK package to install.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_APK_PACKAGE}${normal})
 
 ${bold}${blue}OPTIONS for the standalone installation:${normal}
 
@@ -1124,7 +1128,30 @@ main() {
             ;;
         esac
         ;;
-
+      --apk-repo)
+        shift
+        case $1 in
+          "")
+            usage "--apk-repo requires an argument."
+            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            ;;
+        *)
+            APK_REPO_URL="${1}"
+            ;;
+        esac
+        ;;
+      --apk-package)
+        shift
+        case $1 in
+          "")
+            usage "--apk-package requires an argument."
+            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            ;;
+        *)
+            APK_PACKAGE="${1}"
+            ;;
+        esac
+        ;;
       --cosign-path)
         shift
         case $1 in
