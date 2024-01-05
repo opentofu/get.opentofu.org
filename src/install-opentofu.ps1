@@ -54,8 +54,6 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$skipVerify = $false,
     [Parameter(Mandatory = $false)]
-    [string]$wingetPath = "winget.exe",
-    [Parameter(Mandatory = $false)]
     [switch]$skipChangePath = $false,
     [Parameter(Mandatory = $false)]
     [switch]$allUsers = $false,
@@ -88,8 +86,6 @@ if ($allUsers) {
 $defaultCosignPath = "cosign.exe"
 $defaultCosignOidcIssuer = "https://token.actions.githubusercontent.com"
 $defaultCosignIdentity = "autodetect"
-
-$defaultWingetPath = "winget.exe"
 
 if (!$opentofuVersion) {
     $opentofuVersion = "latest"
