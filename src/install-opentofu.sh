@@ -252,13 +252,13 @@ download_file() {
   elif command_exists "curl"; then
     if [ "${IS_GITHUB}" -eq 1 ]; then
       log_debug "Downloading using curl with GITHUB_TOKEN..."
-      if ! curl -proto '=https' --tlsv1.2 -fsSL -H "Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
+      if ! curl --proto '=https' --tlsv1.2 -fsSL -H "Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
         log_debug "Download failed."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     else
       log_debug "Downloading using curl without GITHUB_TOKEN, this may lead to rate limit issues..."
-      if ! curl -proto '=https' --tlsv1.2 -fsSL -o "$2" "$1"; then
+      if ! curl --proto '=https' --tlsv1.2 -fsSL -o "$2" "$1"; then
         log_debug "Download failed, please try specifying the GITHUB_TOKEN environment variable."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi

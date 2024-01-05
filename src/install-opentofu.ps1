@@ -332,8 +332,8 @@ function installStandalone() {
                     if ($opentofuVersion.Contains("alpha") -or $opentofuVersion.Contains("beta")) {
                         $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
                     } else {
-                        $ver = [version]$opentofuVersion
-                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${$ver.Major}"
+                        $ver = [version]($opentofuVersion -replace "-alpha|-beta|-rc.*")
+                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${ver.Major}.${ver.Minor}"
                     }
                 }
             }
