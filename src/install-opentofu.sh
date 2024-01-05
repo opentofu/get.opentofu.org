@@ -885,11 +885,11 @@ ${bold}${blue}OPTIONS for all installation methods:${normal}
                                 (${bold}One of:${normal} ${magenta}none${normal}, ${magenta}su${normal}, ${magenta}sudo${normal}, ${magenta}auto${normal}; ${bold}default:${normal} ${magenta}auto${normal})
   ${bold}--install-method ${magenta}METHOD${normal}       The installation method to use. (${red}required${normal})
                                 Must be one of:
-                                    ${magenta}deb${normal}       Debian repository installation
-                                    ${magenta}rpm${normal}       RPM repository installation
-                                    ${magenta}apk${normal}       APK (Alpine) repository installation
-                                    ${magenta}snap${normal}      Snapcraft installation
-                                    ${magenta}brew${normal}      Homebrew installation
+                                    ${magenta}deb${normal}         Debian repository installation
+                                    ${magenta}rpm${normal}         RPM repository installation
+                                    ${magenta}apk${normal}         APK (Alpine) repository installation
+                                    ${magenta}snap${normal}        Snapcraft installation
+                                    ${magenta}brew${normal}        Homebrew installation
                                     ${magenta}standalone${normal}  Standalone installation
   ${bold}--skip-verify${normal}                 Skip GPG or cosign integrity verification.
                                 (${bold}${red}not recommended${normal}).
