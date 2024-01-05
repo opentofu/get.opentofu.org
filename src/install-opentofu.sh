@@ -23,7 +23,7 @@ magenta=""
 cyan=""
 gray=""
 if [ -t 1 ]; then
-    if command -v "$1" >/dev/null 2>&1; then
+    if command -v "tput" >/dev/null 2>&1; then
       colors=$(tput colors)
     else
       colors=2
