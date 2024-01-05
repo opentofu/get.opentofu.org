@@ -325,12 +325,24 @@ function installStandalone() {
 
         if (!$skipVerify)
         {
-            try
-            {
-                logInfo "Verifying signature..."
-                & $cosignPath verify-blob --certificate-identity $cosignIdentity --signature "${tempPath}/${sigFile}" --certificate "${tempPath}/${certFile}" --certificate-oidc-issuer $cosignOidcIssuer "${tempPath}/${sumsFile}"
-            } catch {
-                $msg = $_.ToString()
+            if ($cosignIdentity -eq "autodetect") {
+                if ($opentofuVersion -in "1.6.0-beta4","1.6.0-beta3","1.6.0-beta2","1.6.0-beta1","1.6.0-alpha5","1.6.0-alpha4","1.6.0-alpha3","1.6.0-alpha2","1.6.0-alpha1") {
+                    $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
+                } else {
+                    if ($opentofuVersion.Contains("alpha") -or $opentofuVersion.Contains("beta")) {
+                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
+                    } else {
+                        $ver = [version]$opentofuVersion
+                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${$ver.Major}"
+                    }
+                }
+            }
+
+            logInfo "Verifying signature against cosign identity ${cosignIdentity}..."
+            & $cosignPath verify-blob --certificate-identity $cosignIdentity --signature "${tempPath}/${sigFile}" --certificate "${tempPath}/${certFile}" --certificate-oidc-issuer $cosignOidcIssuer "${tempPath}/${sumsFile}"
+            if($?) {
+                logInfo "Signature verified."
+            } else {
                 throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with cosign. (${msg})")
             }
         }
