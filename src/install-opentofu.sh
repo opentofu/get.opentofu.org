@@ -283,6 +283,10 @@ download_gpg() {
     log_error "Bug: no destination passed to download_gpg."
     return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
   fi
+  if ! command_exists "gpg"; then
+    log_error "Missing gpg binary."
+    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+  fi
   log_debug "Downloading GPG key from ${1} to ${2}..."
   if ! download_tool_exists; then
     return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
