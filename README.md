@@ -8,7 +8,8 @@ Pages. The installation scripts are located in [`src/install-opentofu.sh`](src/i
 
 ### Linux
 
-You can test the installation scriptmanually, or you can use `docker compose` to run the automated
+You can test the installation script manually, or you can use `docker compose` to run the automated
+
 tests:
 
 ```bash
