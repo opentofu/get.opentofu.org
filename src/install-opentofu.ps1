@@ -12,7 +12,6 @@ https://opentofu.org/docs/intro/install/
 Show a more detailed help.
 .PARAMETER installMethod
 The installation method to use. Must be one of:
-- winget
 - standalone
 .PARAMETER installPath
 Installs OpenTofu to the specified path. (Standalone installation only.)
@@ -67,7 +66,9 @@ param(
 )
 
 $scriptCommand = $MyInvocation.MyCommand.Source
-$ErrorActionPreference = 'silentlyContinue'
+$InformationPreference = 'continue'
+$WarningPreference = 'contine'
+$ErrorActionPreference = 'continue'
 $ProgressPreference = 'silentlyContinue'
 
 $esc = [char]27
@@ -145,14 +146,24 @@ function logInfo() {
     param(
         $message
     )
-    Write-Output "${blue}${message}${normal}"
+    Write-Information "${blue}${message}${normal}"
 }
 
 function logWarning() {
     param(
         $message
     )
-    Write-Output "${orange}${message}${normal}"
+    Write-Warning "${orange}${message}${normal}"
+}
+
+function logError() {
+    param(
+        $message
+    )
+    try
+    {
+        [Console]::Error.WriteLine("${red}${message}${normal}")
+    } catch {}
 }
 
 function tempdir() {
@@ -190,10 +201,15 @@ function unpackStandalone() {
         $global:ProgressPreference = $prevProgressPreference
     }
 
+    if ($skipChangePath) {
+        return
+    }
     try {
         if ($allUsers) {
+            logInfo "Updating system PATH variable..."
             $target = [EnvironmentVariableTarget]::Machine
         } else {
+            logInfo "Updating user PATH variable..."
             $target = [EnvironmentVariableTarget]::User
         }
         $currentPath = [Environment]::GetEnvironmentVariable("Path", $target)
@@ -465,12 +481,12 @@ try
         }
     }
 } catch [ExitCodeException] {
-    [Console]::Error.WriteLine($red + $_.ToString() + ${normal})
+    logError($_.ToString())
     if ($_.Exception.PrintUsage) {
-        Write-Output ""
         usage
     }
     exit $_.Exception.ExitCode
 } catch {
-    [Console]::Error.WriteLine($red + $_.ToString() + ${normal})
+    logError($_.ToString())
+    exit $exitCodeInstallFailed
 }

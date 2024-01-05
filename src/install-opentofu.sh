@@ -234,28 +234,30 @@ download_file() {
     fi
   fi
   if command_exists "wget"; then
-    log_debug "Downloading using wget..."
     if [ "${IS_GITHUB}" -eq 1 ]; then
+      log_debug "Downloading using wget with GITHUB_TOKEN..."
       if ! wget -q --header="Authorization: token ${GITHUB_TOKEN}" -O "$2" "$1"; then
         log_debug "Download failed."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     else
+      log_debug "Downloading using wget without GITHUB_TOKEN, this may lead to rate limit issues..."
       if ! wget -q -O "$2" "$1"; then
-        log_debug "Download failed."
+        log_debug "Download failed, please try specifying the GITHUB_TOKEN environment variable."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     fi
   elif command_exists "curl"; then
-    log_debug "Downloading using curl..."
     if [ "${IS_GITHUB}" -eq 1 ]; then
+      log_debug "Downloading using curl with GITHUB_TOKEN..."
       if ! curl -fsSL -H "Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
         log_debug "Download failed."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     else
+      log_debug "Downloading using curl without GITHUB_TOKEN, this may lead to rate limit issues..."
       if ! curl -fsSL -o "$2" "$1"; then
-        log_debug "Download failed."
+        log_debug "Download failed, please try specifying the GITHUB_TOKEN environment variable."
         return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
       fi
     fi
@@ -671,7 +673,13 @@ install_brew() {
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
   fi
   log_info "Installing OpenTofu using Homebrew..."
+  log_info "Updating brew..."
+  if ! brew update; then
+    log_info "brew update failed."
+    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+  fi
   if ! brew install opentofu; then
+    log_info "brew install opentofu failed."
     return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
   fi
   if ! tofu --version; then
