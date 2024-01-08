@@ -105,8 +105,8 @@ if (!$cosignIdentity) {
 
 $exitCodeOK = 0
 $exitCodeInstallRequirementNotMet = 1
-$exitCodeInstallFailed = 3
-$exitCodeInvalidArgument = 4
+$exitCodeInstallFailed = 2
+$exitCodeInvalidArgument = 3
 
 class ExitCodeException : System.Exception {
     [int]  $ExitCode

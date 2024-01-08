@@ -6,9 +6,8 @@
 
 export TOFU_INSTALL_EXIT_CODE_OK=0
 export TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET=1
-export TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING=2
-export TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED=3
-export TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT=4
+export TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED=2
+export TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT=3
 
 export TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND=11
 export TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED=13
@@ -201,7 +200,7 @@ maybe_root() {
 }
 
 # This function verifies if one of the supported download tools is installed and returns with
-# $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING if that is not th ecase.
+# $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if that is not th ecase.
 download_tool_exists() {
     log_debug "Determining if a supported download tool is installed..."
     if command_exists "wget"; then
@@ -212,12 +211,12 @@ download_tool_exists() {
       return "${TOFU_INSTALL_EXIT_CODE_OK}"
     else
       log_debug "No supported download tool is installed."
-      return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
     fi
 }
 
 # This function downloads the URL specified in $1 into the file specified in $2.
-# It returns $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING if no supported download tool is installed, or $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+# It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if no supported download tool is installed, or $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
 # if the download failed.
 download_file() {
   if [ -z "$1" ]; then
@@ -265,7 +264,7 @@ download_file() {
     fi
   else
     log_error "Neither wget nor curl are available on your system. Please install one of them to proceed."
-    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_debug "Download successful."
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
@@ -273,7 +272,7 @@ download_file() {
 
 # This function downloads the OpenTofu GPG key from the specified URL to the specified location. Setting the third
 # parameter to 1 causes the file to be moved as root. It returns $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED if the
-# download fails, or $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING if no download tool is available.
+# download fails, or $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if no download tool is available.
 download_gpg() {
   if [ -z "$1" ]; then
     log_error "Bug: no URL passed to download_gpg."
@@ -289,7 +288,7 @@ download_gpg() {
   fi
   log_debug "Downloading GPG key from ${1} to ${2}..."
   if ! download_tool_exists; then
-    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_debug "Creating temporary directory..."
   TEMPDIR=$(mktemp -d)
@@ -700,7 +699,7 @@ install_brew() {
 install_standalone() {
   if ! download_tool_exists; then
     log_error "Neither wget nor curl are available on your system. Please install at least one of them to proceed."
-    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   if ! command_exists "unzip"; then
     log_warning "Unzip is missing, please install it to use the standalone installation method."
@@ -958,7 +957,6 @@ ${bold}${blue}Exit codes:${normal}
                                 for these selected installation method. Please
                                 install the indicated tools to continue.
                                 (e.g. Homebrew for the ${bold}brew${normal} installation method.)
-  ${bold}${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}${normal}                             You must install either ${bold}curl${normal} or ${bold}wget${normal}.
   ${bold}${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}${normal}                             The installation failed.
   ${bold}${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}${normal}                             Invalid configuration options.
 
