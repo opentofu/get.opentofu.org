@@ -65,7 +65,7 @@ param(
 
 $scriptCommand = $MyInvocation.MyCommand.Source
 $InformationPreference = 'continue'
-$WarningPreference = 'contine'
+$WarningPreference = 'continue'
 $ErrorActionPreference = 'continue'
 $ProgressPreference = 'silentlyContinue'
 
