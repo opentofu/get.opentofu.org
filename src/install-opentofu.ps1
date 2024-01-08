@@ -128,7 +128,7 @@ class InvalidArgumentException : ExitCodeException {
 }
 
 class InstallMethodNotSupportedException : ExitCodeException {
-    InstallMethodNotSupportedException([string] $message) : base($message, $exitCodeInvalidArgument, $false) {
+    InstallMethodNotSupportedException([string] $message) : base($message, $exitCodeInstallMethodNotSupported, $false) {
 
     }
 }
