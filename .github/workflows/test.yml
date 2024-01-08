@@ -41,6 +41,8 @@ jobs:
       - name: Test
         working-directory: tests/macos
         run: ./${{ matrix.method }}.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   widows:
     name: Windows
     runs-on: windows-latest
@@ -56,3 +58,5 @@ jobs:
       - name: Test
         working-directory: tests\windows
         run: .\test.ps1 -method "${{ matrix.method }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
