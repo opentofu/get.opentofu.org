@@ -263,7 +263,7 @@ function installStandalone() {
         }
         if (!$releaseData.name)
         {
-            throw [InstallFailedException]::new("Failed to download release information from GitHub. This may be due to GitHub rate limiting, which you can work around by providing a GITHUB_TOKEN environment variable or by providing a specific OpenTofu version to install using the -opentofuVersion parameter. There seems to be no 'name' field in response, which indicates that GitHub sent us an unexpected response. The full response body was: " + $body)
+            throw [InstallFailedException]::new("Failed to parse release information from GitHub. This may be due to GitHub rate limiting, which you can work around by providing a GITHUB_TOKEN environment variable or by providing a specific OpenTofu version to install using the -opentofuVersion parameter. There seems to be no 'name' field in response, which indicates that GitHub sent us an unexpected response. The full response body was: " + $body)
         }
         $opentofuVersion = $releaseData.name.Substring(1)
         logInfo "Latest OpenTofu version is ${opentofuVersion}."
@@ -325,10 +325,10 @@ function installStandalone() {
                 if ($opentofuVersion -in "1.6.0-beta4","1.6.0-beta3","1.6.0-beta2","1.6.0-beta1","1.6.0-alpha5","1.6.0-alpha4","1.6.0-alpha3","1.6.0-alpha2","1.6.0-alpha1") {
                     $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
                 } else {
-                    if ($opentofuVersion.Contains("alpha") -or $opentofuVersion.Contains("beta")) {
+                    if ($opentofuVersion.Contains("-alpha") -or $opentofuVersion.Contains("-beta")) {
                         $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
                     } else {
-                        $ver = [version]($opentofuVersion -replace "-alpha|-beta|-rc.*")
+                        $ver = [version]($opentofuVersion -replace "-rc.*")
                         $major = $ver.Major
                         $minor = $ver.Minor
                         $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${major}.${minor}"
