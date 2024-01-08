@@ -5,7 +5,7 @@
 # This script installs OpenTofu via any of the supported methods.
 
 export TOFU_INSTALL_EXIT_CODE_OK=0
-export TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED=1
+export TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET=1
 export TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING=2
 export TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED=3
 export TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT=4
@@ -285,7 +285,7 @@ download_gpg() {
   fi
   if ! command_exists "gpg"; then
     log_error "Missing gpg binary."
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_debug "Downloading GPG key from ${1} to ${2}..."
   if ! download_tool_exists; then
@@ -367,12 +367,12 @@ deb_download_gpg() {
 }
 
 # This function installs OpenTofu via a Debian repository. It returns
-# $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if this is not a Debian system.
+# $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if this is not a Debian system.
 install_deb() {
   log_info "Attempting installation via Debian repository..."
   if ! command_exists apt-get; then
     log_info "The apt-get command is not available, skipping Debian repository installation."
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
 
   if ! is_root; then
@@ -485,10 +485,10 @@ EOF
 }
 
 # This function installs OpenTofu via the zypper command line utility. It returns
-# $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if zypper is not available.
+# $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if zypper is not available.
 install_zypper() {
   if ! command_exists "zypper"; then
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_info "Installing OpenTofu using zypper..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
@@ -556,11 +556,11 @@ EOF
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
-# This function installs OpenTofu via the yum command line utility. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+# This function installs OpenTofu via the yum command line utility. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET
 # if yum is not available.
 install_yum() {
   if ! command_exists "yum"; then
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_info "Installing OpenTofu using yum..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
@@ -621,7 +621,7 @@ EOF
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
-# This function installs OpenTofu via an RPM repository. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+# This function installs OpenTofu via an RPM repository. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET
 # if this is not an RPM-based system.
 install_rpm() {
   if command_exists "zypper"; then
@@ -634,10 +634,10 @@ install_rpm() {
 }
 
 # This function installs OpenTofu via an APK (Alpine Linux) package. It returns
-# $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if this is not an Alpine Linux system.
+# $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if this is not an Alpine Linux system.
 install_apk() {
   if ! command_exists "apk"; then
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_info "Installing OpenTofu using APK..."
   if [ "${APK_REPO_URL}" != "-" ]; then
@@ -655,11 +655,11 @@ install_apk() {
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
-# This function installs OpenTofu via Snapcraft. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if
+# This function installs OpenTofu via Snapcraft. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if
 # Snap is not available.
 install_snap() {
   if ! command_exists "snap"; then
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_info "Installing OpenTofu using Snap..."
   if ! as_root snap install --classic opentofu; then
@@ -672,11 +672,11 @@ install_snap() {
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
-# This function installs OpenTofu via Homebrew. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if
+# This function installs OpenTofu via Homebrew. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if
 # Homebrew is not available.
 install_brew() {
   if ! command_exists "brew"; then
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   log_info "Installing OpenTofu using Homebrew..."
   log_info "Updating brew..."
@@ -704,12 +704,12 @@ install_standalone() {
   fi
   if ! command_exists "unzip"; then
     log_warning "Unzip is missing, please install it to use the standalone installation method."
-    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
   fi
   if ! command_exists "shasum"; then
     if ! command_exists "sha256sum"; then
       log_warning "shasum is missing, please install it to use the standalone installation method."
-      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
     fi
   fi
 
@@ -717,7 +717,7 @@ install_standalone() {
     if ! command_exists "${COSIGN_PATH}"; then
       log_error "Cosign is not installed on your system, which is required to verify package integrity."
       log_info "If you have cosign installed, please pass the --cosign-path option. Alternatively, you can disable integrity verification by passing ${bold}--skip-verify${normal} (not recommended)."
-      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
     fi
   fi
 
@@ -954,8 +954,9 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
 ${bold}${blue}Exit codes:${normal}
 
   ${bold}${TOFU_INSTALL_EXIT_CODE_OK}${normal}                             Installation successful.
-  ${bold}${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}${normal}                             The selected installation method is not supported
-                                on your system. You may be missing some packages.
+  ${bold}${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}${normal}                             Your system is missing one or more requirements
+                                for these selected installation method. Please
+                                install the indicated tools to continue.
                                 (e.g. Homebrew for the ${bold}brew${normal} installation method.)
   ${bold}${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}${normal}                             You must install either ${bold}curl${normal} or ${bold}wget${normal}.
   ${bold}${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}${normal}                             The installation failed.

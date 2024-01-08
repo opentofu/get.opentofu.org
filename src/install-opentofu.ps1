@@ -104,7 +104,7 @@ if (!$cosignIdentity) {
 }
 
 $exitCodeOK = 0
-$exitCodeInstallMethodNotSupported = 1
+$exitCodeInstallRequirementNotMet = 1
 $exitCodeInstallFailed = 3
 $exitCodeInvalidArgument = 4
 
@@ -127,8 +127,8 @@ class InvalidArgumentException : ExitCodeException {
     }
 }
 
-class InstallMethodNotSupportedException : ExitCodeException {
-    InstallMethodNotSupportedException([string] $message) : base($message, $exitCodeInstallMethodNotSupported, $false) {
+class InstallRequirementNotMetException : ExitCodeException {
+    InstallRequirementNotMetException([string] $message) : base($message, $exitCodeInstallRequirementNotMet, $false) {
 
     }
 }
@@ -235,10 +235,10 @@ function installStandalone() {
         try {
             $ErrorActionPreference = 'stop'
             if(!(Get-Command $cosignPath)){
-                throw [InstallMethodNotSupportedException]::new($cosignError)
+                throw [InstallRequirementNotMetException]::new($cosignError)
             }
         } catch {
-            throw [InstallMethodNotSupportedException]::new($cosignError)
+            throw [InstallRequirementNotMetException]::new($cosignError)
         }
     } else {
         logWarning "Signature verification is disabled. This is not recommended."
@@ -461,8 +461,9 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
 ${bold}${blue}Exit codes:${normal}
 
   ${bold}${exitCodeOK}${normal}                             Installation successful.
-  ${bold}${exitCodeInstallMethodNotSupported}${normal}                             The selected installation method is not supported
-                                on your system. You may be missing the required tools.
+  ${bold}${exitCodeInstallRequirementNotMet}${normal}                             Your system is missing one or more requirements
+                                for these selected installation method. Please
+                                install the indicated tools to continue.
   ${bold}${exitCodeInstallFailed}${normal}                             The installation failed.
   ${bold}${exitCodeInvalidArgument}${normal}                             Invalid configuration options.
 
