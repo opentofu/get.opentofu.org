@@ -29,7 +29,7 @@ if [ -t 1 ]; then
       colors=2
     fi
 
-    if [ "$colors" -ge 8 ]; then
+    if [ "${colors}" -ge 8 ]; then
         bold="$(tput bold)"
         normal="$(tput sgr0)"
         red="$(tput setaf 1)"
@@ -130,18 +130,18 @@ command_exists() {
   log_debug "Determining if the ${1} command is available..."
   if [ -z "$1" ]; then
     log_error "Bug: no command supplied to command_exists()"
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if ! command -v "$1" >/dev/null 2>&1; then
     log_debug "The ${1} command is not available."
-    return $TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND
+    return "${TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND}"
   fi
   log_debug "The ${1} command is available."
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 is_root() {
-  if [ "$(id -u)" -eq 0 ]; then
+  if [ "$(id -u || true)" -eq 0 ]; then
     return 0
   fi
   return 1
@@ -165,7 +165,7 @@ as_root() {
         su root "$@"
       else
         log_error "Neither su nor sudo is installed, cannot obtain root privileges."
-        return $TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND
+        return "${TOFU_INSTALL_RETURN_CODE_COMMAND_NOT_FOUND}"
       fi
       return $?
       ;;
@@ -186,7 +186,7 @@ as_root() {
       ;;
     *)
       log_error "Bug: invalid root method value: $1"
-      return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+      return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   esac
 }
 
@@ -194,10 +194,10 @@ as_root() {
 maybe_root() {
   if ! "$@" >/dev/null 2>&1; then
     if ! as_root "$@"; then
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function verifies if one of the supported download tools is installed and returns with
@@ -206,13 +206,13 @@ download_tool_exists() {
     log_debug "Determining if a supported download tool is installed..."
     if command_exists "wget"; then
       log_debug "wget is installed."
-      return $TOFU_INSTALL_EXIT_CODE_OK
+      return "${TOFU_INSTALL_EXIT_CODE_OK}"
     elif command_exists "curl"; then
       log_debug "curl is installed."
-      return $TOFU_INSTALL_EXIT_CODE_OK
+      return "${TOFU_INSTALL_EXIT_CODE_OK}"
     else
       log_debug "No supported download tool is installed."
-      return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
+      return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
     fi
 }
 
@@ -222,16 +222,16 @@ download_tool_exists() {
 download_file() {
   if [ -z "$1" ]; then
     log_error "Bug: no URL supplied to download_file()"
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if [ -z "$2" ]; then
     log_error "Bug: no destination file supplied to download_file()"
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   log_debug "Downloading URL ${1} to ${2}..."
   IS_GITHUB=0
   if [ -n "${GITHUB_TOKEN}" ]; then
-    if [ "$(echo "$1" | grep -c "api.github.com")" -ne 0 ]; then
+    if [ "$(echo "$1" | grep -c "api.github.com" || true)" -ne 0 ]; then
       IS_GITHUB=1
     fi
   fi
@@ -240,13 +240,13 @@ download_file() {
       log_debug "Downloading using wget with GITHUB_TOKEN..."
       if ! wget -q --header="Authorization: token ${GITHUB_TOKEN}" -O "$2" "$1"; then
         log_debug "Download failed."
-        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+        return "${TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED}"
       fi
     else
       log_debug "Downloading using wget without GITHUB_TOKEN, this may lead to rate limit issues..."
       if ! wget -q -O "$2" "$1"; then
         log_debug "Download failed, please try specifying the GITHUB_TOKEN environment variable."
-        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+        return "${TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED}"
       fi
     fi
   elif command_exists "curl"; then
@@ -254,21 +254,21 @@ download_file() {
       log_debug "Downloading using curl with GITHUB_TOKEN..."
       if ! curl --proto '=https' --tlsv1.2 -fsSL -H "Authorization: token ${GITHUB_TOKEN}" -o "$2" "$1"; then
         log_debug "Download failed."
-        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+        return "${TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED}"
       fi
     else
       log_debug "Downloading using curl without GITHUB_TOKEN, this may lead to rate limit issues..."
       if ! curl --proto '=https' --tlsv1.2 -fsSL -o "$2" "$1"; then
         log_debug "Download failed, please try specifying the GITHUB_TOKEN environment variable."
-        return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+        return "${TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED}"
       fi
     fi
   else
     log_error "Neither wget nor curl are available on your system. Please install one of them to proceed."
-    return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
+    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
   fi
   log_debug "Download successful."
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function downloads the OpenTofu GPG key from the specified URL to the specified location. Setting the third
@@ -277,42 +277,42 @@ download_file() {
 download_gpg() {
   if [ -z "$1" ]; then
     log_error "Bug: no URL passed to download_gpg."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if [ -z "$2" ]; then
     log_error "Bug: no destination passed to download_gpg."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if ! command_exists "gpg"; then
     log_error "Missing gpg binary."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_debug "Downloading GPG key from ${1} to ${2}..."
   if ! download_tool_exists; then
-    return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
+    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
   fi
   log_debug "Creating temporary directory..."
   TEMPDIR=$(mktemp -d)
   if [ -z "${TEMPDIR}" ]; then
     log_error "Failed to create temporary directory for GPG download."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   TEMPFILE="${TEMPDIR}/opentofu.gpg"
 
   if ! download_file "${1}" "${TEMPFILE}"; then
     log_debug "Removing temporary directory..."
     rm -rf "${TEMPFILE}"
-    return $TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED
+    return "${TOFU_INSTALL_RETURN_CODE_DOWNLOAD_FAILED}"
   fi
-  if [ "$(grep 'BEGIN PGP PUBLIC KEY BLOCK' -c "${TEMPFILE}")" -ne 0 ]; then
+  if [ "$(grep 'BEGIN PGP PUBLIC KEY BLOCK' -c "${TEMPFILE}" || true)" -ne 0 ]; then
     log_debug "Performing GPG dearmor on ${TEMPFILE}"
     if ! gpg --no-tty --batch --dearmor -o "${TEMPFILE}.tmp" <"${TEMPFILE}"; then
       log_error "Failed to GPG dearmor ${TEMPFILE}."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
     if ! mv "${TEMPFILE}.tmp" "${TEMPFILE}"; then
       log_error "Failed to move ${TEMPFILE}.tmp to ${TEMPFILE}."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
   if [ "$3" = "1" ]; then
@@ -320,20 +320,20 @@ download_gpg() {
     if ! as_root mv "${TEMPFILE}" "${2}"; then
       log_error "Failed to move ${TEMPFILE} to ${2}."
       rm -rf "${TEMPFILE}"
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   else
     log_debug "Moving GPG file as the current user..."
     if ! mv "${TEMPFILE}" "${2}"; then
       log_error "Failed to move ${TEMPFILE} to ${2}."
       rm -rf "${TEMPFILE}"
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
 
   log_debug "Removing temporary directory..."
   rm -rf "${TEMPFILE}"
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This is a helper function that downloads a GPG URL to the specified file.
@@ -342,28 +342,28 @@ deb_download_gpg() {
   GPG_FILE="${2}"
   if [ -z "${DEB_GPG_URL}" ]; then
     log_error "Bug: no GPG URL specified for deb_download_gpg."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if [ -z "${GPG_FILE}" ]; then
     log_error "Bug: no destination path specified for deb_download_gpg."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   fi
   if ! download_gpg "${DEB_GPG_URL}" "${GPG_FILE}" 1; then
     log_error "Failed to download GPG key from ${DEB_GPG_URL}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   log_debug "Changing ownership and permissions of ${GPG_FILE}..."
   if ! as_root chown root:root "${GPG_FILE}"; then
     log_error "Failed to chown ${GPG_FILE}."
     rm -rf "${GPG_FILE}"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! as_root chmod a+r "${GPG_FILE}"; then
     log_error "Failed to chmod ${GPG_FILE}."
     rm -rf "${GPG_FILE}"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via a Debian repository. It returns
@@ -372,7 +372,7 @@ install_deb() {
   log_info "Attempting installation via Debian repository..."
   if ! command_exists apt-get; then
     log_info "The apt-get command is not available, skipping Debian repository installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
 
   if ! is_root; then
@@ -389,7 +389,7 @@ install_deb() {
   log_info "Updating package list..."
   if ! as_root apt-get update; then
     log_error "Failed to update apt package list."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_debug "Determining packages to install..."
@@ -405,9 +405,9 @@ install_deb() {
   log_info "Installing necessary packages for installation..."
   log_debug "Installing ${PACKAGE_LIST}..."
   # shellcheck disable=SC2086
-  if ! as_root apt-get install -y $PACKAGE_LIST; then
+  if ! as_root apt-get install -y ${PACKAGE_LIST}; then
     log_error "Failed to install requisite packages for Debian repository installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   log_debug "Necessary packages installed."
 
@@ -416,7 +416,7 @@ install_deb() {
     log_debug "Creating /etc/apt/keyrings..."
     if ! as_root install -m 0755 -d /etc/apt/keyrings; then
       log_error "Failed to create /etc/apt/keyrings."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
     log_debug "Created /etc/apt/keyrings."
 
@@ -424,14 +424,14 @@ install_deb() {
     log_debug "Downloading the GPG key from ${DEB_GPG_URL}.."
     if ! deb_download_gpg "${DEB_GPG_URL}" "${PACKAGE_GPG_FILE}"; then
       log_error "Failed to download GPG key from ${DEB_GPG_URL}."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
     if [ -n "${DEB_REPO_GPG_URL}" ] && [ "${DEB_REPO_GPG_URL}" != "-" ]; then
       log_debug "Downloading the repo GPG key from ${DEB_REPO_GPG_URL}.."
       REPO_GPG_FILE=/etc/apt/keyrings/opentofu-repo.gpg
       if ! deb_download_gpg "${DEB_REPO_GPG_URL}" "${REPO_GPG_FILE}" 1; then
         log_error "Failed to download GPG key from ${DEB_REPO_GPG_URL}."
-        return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
       fi
     fi
   fi
@@ -441,7 +441,7 @@ install_deb() {
     if [ -n "${REPO_GPG_FILE}" ]; then
       if ! as_root tee /etc/apt/sources.list.d/opentofu.list; then
         log_error "Failed to create /etc/apt/sources.list.d/opentofu.list."
-        return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
       fi <<EOF
 deb [signed-by=${PACKAGE_GPG_FILE},${REPO_GPG_FILE}] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 deb-src [signed-by=${PACKAGE_GPG_FILE},${REPO_GPG_FILE}] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
@@ -449,7 +449,7 @@ EOF
     else
       if ! as_root tee /etc/apt/sources.list.d/opentofu.list; then
         log_error "Failed to create /etc/apt/sources.list.d/opentofu.list."
-        return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
       fi <<EOF
 deb [signed-by=${PACKAGE_GPG_FILE}] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 deb-src [signed-by=${PACKAGE_GPG_FILE}] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
@@ -458,7 +458,7 @@ EOF
   else
     if ! as_root tee /etc/apt/sources.list.d/opentofu.list; then
       log_error "Failed to create /etc/apt/sources.list.d/opentofu.list."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi <<EOF
 deb [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 deb-src [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
@@ -468,27 +468,27 @@ EOF
   log_info "Updating package list..."
   if ! as_root apt-get update; then
     log_error "Failed to update apt package list."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   log_info "Installing OpenTofu..."
   if ! as_root apt-get install -y tofu; then
     log_error "Failed to install opentofu."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Checking if OpenTofu is installed correctly..."
   if ! tofu --version > /dev/null; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via the zypper command line utility. It returns
 # $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if zypper is not available.
 install_zypper() {
   if ! command_exists "zypper"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_info "Installing OpenTofu using zypper..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
@@ -507,7 +507,7 @@ EOF
   fi
   if ! as_root tee /etc/zypp/repos.d/opentofu.repo; then
     log_error "Failed to write /etc/zypp/repos.d/opentofu.repo"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi <<EOF
 [opentofu]
 name=opentofu
@@ -531,36 +531,36 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
-  for GPG_SRC in $GPG_URL; do
+  for GPG_SRC in ${GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
     if ! rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   done
   for REPO in opentofu opentofu-source; do
-    log_debug "Importing GPG key for repo $REPO into zypper..."
+    log_debug "Importing GPG key for repo ${REPO} into zypper..."
     if ! as_root zypper --gpg-auto-import-keys refresh opentofu; then
-      log_error "Failed to auto-import GPG key for repo $REPO into zypper."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      log_error "Failed to auto-import GPG key for repo ${REPO} into zypper."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   done
   if ! as_root zypper install -y tofu; then
     log_error "Failed to install tofu via zypper."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! tofu --version; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via the yum command line utility. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
 # if yum is not available.
 install_yum() {
   if ! command_exists "yum"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_info "Installing OpenTofu using yum..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
@@ -579,7 +579,7 @@ EOF
   fi
   if ! as_root tee /etc/yum.repos.d/opentofu.repo; then
     log_error "Failed to write /etc/yum.repos.d/opentofu.repo"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi <<EOF
 [opentofu]
 name=opentofu
@@ -603,22 +603,22 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
-  for GPG_SRC in $GPG_URL; do
+  for GPG_SRC in ${GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
     if ! rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   done
   if ! as_root yum install -y tofu; then
     log_error "Failed to install tofu via yum."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! tofu --version; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via an RPM repository. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
@@ -637,7 +637,7 @@ install_rpm() {
 # $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if this is not an Alpine Linux system.
 install_apk() {
   if ! command_exists "apk"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_info "Installing OpenTofu using APK..."
   if [ "${APK_REPO_URL}" != "-" ]; then
@@ -646,53 +646,53 @@ install_apk() {
     APK_REPO_PARAM=""
   fi
   if ! apk add "${APK_PACKAGE}" "${APK_REPO_PARAM}"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! tofu --version; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via Snapcraft. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if
 # Snap is not available.
 install_snap() {
   if ! command_exists "snap"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_info "Installing OpenTofu using Snap..."
   if ! as_root snap install --classic opentofu; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! tofu --version; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu via Homebrew. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED if
 # Homebrew is not available.
 install_brew() {
   if ! command_exists "brew"; then
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   log_info "Installing OpenTofu using Homebrew..."
   log_info "Updating brew..."
   if ! brew update; then
     log_info "brew update failed."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! brew install opentofu; then
     log_info "brew install opentofu failed."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if ! tofu --version; then
     log_error "Failed to run tofu after installation."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 # This function installs OpenTofu as a standalone installation. It returns $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED if the installation
@@ -700,16 +700,16 @@ install_brew() {
 install_standalone() {
   if ! download_tool_exists; then
     log_error "Neither wget nor curl are available on your system. Please install at least one of them to proceed."
-    return $TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING
+    return "${TOFU_INSTALL_EXIT_CODE_DOWNLOAD_TOOL_MISSING}"
   fi
   if ! command_exists "unzip"; then
     log_warning "Unzip is missing, please install it to use the standalone installation method."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
   fi
   if ! command_exists "shasum"; then
     if ! command_exists "sha256sum"; then
       log_warning "shasum is missing, please install it to use the standalone installation method."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
     fi
   fi
 
@@ -717,44 +717,44 @@ install_standalone() {
     if ! command_exists "${COSIGN_PATH}"; then
       log_error "Cosign is not installed on your system, which is required to verify package integrity."
       log_info "If you have cosign installed, please pass the --cosign-path option. Alternatively, you can disable integrity verification by passing ${bold}--skip-verify${normal} (not recommended)."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_METHOD_NOT_SUPPORTED}"
     fi
   fi
 
   log_info "Installing OpenTofu using the standalone installation method..."
 
-  if [ "$OPENTOFU_VERSION" = "latest" ]; then
+  if [ "${OPENTOFU_VERSION}" = "latest" ]; then
     log_info "Determining latest OpenTofu version..."
     OPENTOFU_VERSION=$(download_file "https://api.github.com/repos/opentofu/opentofu/releases/latest" - | grep "tag_name" | sed -e 's/.*tag_name": "v//' -e 's/".*//')
-    if [ -z "$OPENTOFU_VERSION" ]; then
+    if [ -z "${OPENTOFU_VERSION}" ]; then
       log_error "Failed to obtain latest release from the GitHub API. Try passing --opentofu-version to specify a version."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
   OS="$(uname | tr '[:upper:]' '[:lower:]')"
   ARCH="$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')"
   if [ -z "${OS}" ]; then
     log_error "Failed to determine OS version."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if [ -z "${ARCH}" ]; then
     log_error "Failed to determine CPU architecture."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Downloading OpenTofu version ${OPENTOFU_VERSION}..."
   TEMPDIR="$(mktemp -d)"
-  if [ -z "$TEMPDIR" ]; then
+  if [ -z "${TEMPDIR}" ]; then
     log_error "Failed to create temporary directory"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   # shellcheck disable=SC2064
   trap "rm -rf '${TEMPDIR}' || true" EXIT
 
   ZIPDIR="$(mktemp -d)"
-  if [ -z "$ZIPDIR" ]; then
+  if [ -z "${ZIPDIR}" ]; then
     log_error "Failed to create temporary directory"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   # shellcheck disable=SC2064
   trap "rm -rf '${ZIPDIR}' || true" EXIT
@@ -762,14 +762,14 @@ install_standalone() {
   ZIPFILE="tofu_${OPENTOFU_VERSION}_${OS}_${ARCH}.zip"
   if ! download_file "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/${ZIPFILE}" "${TEMPDIR}/${ZIPFILE}"; then
     log_error "Failed to download the OpenTofu release ${OPENTOFU_VERSION}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Performing checksum verification..."
   SUMSFILE="tofu_${OPENTOFU_VERSION}_SHA256SUMS"
   if ! download_file "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/${SUMSFILE}" "${TEMPDIR}/${SUMSFILE}"; then
     log_error "Failed to download ${SUMSFILE} for OpenTofu version ${OPENTOFU_VERSION}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if command_exists "shasum"; then
     REALSUM=$(shasum -a 256 "${TEMPDIR}/${ZIPFILE}" | cut -f 1 -d ' ')
@@ -778,16 +778,16 @@ install_standalone() {
   fi
   if [ -z "${REALSUM}" ]; then
     log_error "Checksum could not be calculated for ${TEMPDIR}/${ZIPFILE}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   EXPECTEDSUM=$(grep "${ZIPFILE}" "${TEMPDIR}/${SUMSFILE}" | cut -f 1 -d ' ')
   if [ -z "${EXPECTEDSUM}" ]; then
     log_error "No checksum found for ${ZIPFILE}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   if [ "${REALSUM}" != "${EXPECTEDSUM}" ]; then
     log_error "Checksum mismatch for ${ZIPFILE}, expected: ${EXPECTEDSUM}, got: ${REALSUM}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
   log_info "Checksum for ${ZIPFILE} is ${REALSUM}, as expected."
 
@@ -798,7 +798,7 @@ install_standalone() {
     for FILE in "${SIGFILE}" "${CERTFILE}"; do
       if ! download_file "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/${FILE}" "${TEMPDIR}/${FILE}"; then
         log_error "Failed to download ${FILE} for OpenTofu version ${OPENTOFU_VERSION}."
-        return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
       fi
     done
 
@@ -815,7 +815,7 @@ install_standalone() {
          [ "${OPENTOFU_VERSION}" = "1.6.0-alpha1" ]; then
           IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
       else
-        if [ "$(echo "${OPENTOFU_VERSION}" | grep -c "alpha")" -ne "0" ] || [ "$(echo "${OPENTOFU_VERSION}" | grep -c "beta")" -ne "0" ]; then
+        if [ "$(echo "${OPENTOFU_VERSION}" | grep -c "alpha" || true)" -ne "0" ] || [ "$(echo "${OPENTOFU_VERSION}" | grep -c "beta" || true)" -ne "0" ]; then
           IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
         else
           IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v$(echo "${OPENTOFU_VERSION}" | sed -e "s/\([0-9]*\)\.\([0-9]*\)\..*/\1.\2/")"
@@ -823,14 +823,14 @@ install_standalone() {
       fi
     fi
 
-    if ! $COSIGN_PATH verify-blob \
+    if ! "${COSIGN_PATH}" verify-blob \
       --certificate-identity "${IDENTITY}" \
       --signature "${TEMPDIR}/${SIGFILE}" \
       --certificate "${TEMPDIR}/${CERTFILE}" \
       --certificate-oidc-issuer "${COSIGN_OIDC_ISSUER}" \
       "${TEMPDIR}/${SUMSFILE}"; then
         log_error "Signature verification failed, the downloaded files may be corrupted."
-        return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
     log_info "Verification successful."
   fi
@@ -838,41 +838,41 @@ install_standalone() {
   log_info "Unpacking OpenTofu..."
   if ! unzip -d "${ZIPDIR}" "${TEMPDIR}/${ZIPFILE}"; then
     log_error "Failed to unzip ${TEMPDIR}/${ZIPFILE} to /"
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Moving OpenTofu installation to ${INSTALL_PATH}..."
   if ! maybe_root mkdir -p "${INSTALL_PATH}"; then
     log_error "Cannot create installation path at ${INSTALL_PATH}."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   if ! maybe_root mv "${ZIPDIR}"/* "${INSTALL_PATH}" >/dev/null 2>&1; then
     log_error "Cannot move ${ZIPDIR} contents to ${INSTALL_PATH}. Please check the permissions on the target directory."
-    return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   if [ "${SYMLINK_PATH}" != "-" ]; then
     log_info "Creating tofu symlink at ${SYMLINK_PATH}/tofu..."
     if ! maybe_root ln -sf "${INSTALL_PATH}/tofu" "${SYMLINK_PATH}/tofu"; then
       log_error "Failed to create symlink at ${INSTALL_PATH}/tofu."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
   log_info "Checking if OpenTofu is installed correctly..."
   if [ "${SYMLINK_PATH}" != "-" ]; then
     if ! "${SYMLINK_PATH}/tofu" --version; then
       log_error "Failed to run ${SYMLINK_PATH}/tofu after installation."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   else
     if ! "${INSTALL_PATH}/tofu" --version; then
       log_error "Failed to run ${INSTALL_PATH}/tofu after installation."
-      return $TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
   log_success "Installation complete."
-  return $TOFU_INSTALL_EXIT_CODE_OK
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
 usage() {
@@ -972,11 +972,11 @@ main() {
     case $1 in
       -h)
         usage
-        return $TOFU_INSTALL_EXIT_CODE_OK
+        return "${TOFU_INSTALL_EXIT_CODE_OK}"
         ;;
       --help)
         usage
-        return $TOFU_INSTALL_EXIT_CODE_OK
+        return "${TOFU_INSTALL_EXIT_CODE_OK}"
         ;;
       --root-method)
         shift
@@ -986,12 +986,12 @@ main() {
             ;;
           "")
             usage "--root-method requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
           *)
             if [ -z "$1" ]; then
               usage "Invalid value for --root-method: $1."
-              return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+              return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             fi
         esac
         ;;
@@ -1003,12 +1003,12 @@ main() {
             ;;
           "")
             usage "--install-method requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
           *)
             if [ -z "$1" ]; then
               usage "Invalid value for --install-method: $1."
-              return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+              return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             fi
         esac
         ;;
@@ -1017,7 +1017,7 @@ main() {
         case $1 in
           "")
             usage "--install-path requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
           *)
             INSTALL_PATH=$1
@@ -1029,7 +1029,7 @@ main() {
         case $1 in
           "")
             usage "--symlink-path requires an argument (pass - to skip creating a symlink)."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
           *)
             SYMLINK_PATH=$1
@@ -1041,7 +1041,7 @@ main() {
         case $1 in
           "")
             usage "--deb-gpg-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             DEB_GPG_URL="${1}"
@@ -1053,7 +1053,7 @@ main() {
         case $1 in
           "")
             usage "--deb-repo-gpg-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             DEB_REPO_GPG_URL="${1}"
@@ -1065,7 +1065,7 @@ main() {
         case $1 in
           "")
             usage "--deb-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             DEB_REPO_URL="${1}"
@@ -1077,7 +1077,7 @@ main() {
         case $1 in
           "")
             usage "--deb-suite requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             DEB_REPO_SUITE="${1}"
@@ -1089,7 +1089,7 @@ main() {
         case $1 in
           "")
             usage "--deb-components requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             DEB_REPO_COMPONENTS="${1}"
@@ -1101,7 +1101,7 @@ main() {
         case $1 in
           "")
             usage "--rpm-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             RPM_REPO_URL="${1}"
@@ -1113,7 +1113,7 @@ main() {
         case $1 in
           "")
             usage "--rpm-gpg-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             RPM_GPG_URL="${1}"
@@ -1125,7 +1125,7 @@ main() {
         case $1 in
           "")
             usage "--rpm-repo-gpg-url requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             RPM_REPO_GPG_URL="${1}"
@@ -1137,7 +1137,7 @@ main() {
         case $1 in
           "")
             usage "--apk-repo requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             APK_REPO_URL="${1}"
@@ -1149,7 +1149,7 @@ main() {
         case $1 in
           "")
             usage "--apk-package requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             APK_PACKAGE="${1}"
@@ -1161,7 +1161,7 @@ main() {
         case $1 in
           "")
             usage "--cosign-path requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             COSIGN_PATH="${1}"
@@ -1173,7 +1173,7 @@ main() {
         case $1 in
           "")
             usage "--cosign-oidc-issuer requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             COSIGN_OIDC_ISSUER="${1}"
@@ -1185,7 +1185,7 @@ main() {
         case $1 in
           "")
             usage "--cosign-identity requires an argument."
-            return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
         *)
             COSIGN_IDENTITY="${1}"
@@ -1201,7 +1201,7 @@ main() {
         ;;
       *)
         usage "Unknown option: $1."
-        return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+        return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
         ;;
     esac
     shift
@@ -1233,11 +1233,11 @@ main() {
     ;;
   "")
     log_error "Please select an installation method with --install-method."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
     ;;
   *)
     log_error "Usupported installation method: ${INSTALL_METHOD}."
-    return $TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT
+    return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   esac
 }
 
