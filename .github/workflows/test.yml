@@ -24,9 +24,8 @@ jobs:
           METHOD: ${{ matrix.method }}
           SH: ${{ matrix.shell }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cd tests/linux
-          ./test.sh
+        working-directory: tests/linux
+        run: ./test.sh
   macos:
     name: MacOS
     runs-on: macos-latest
@@ -40,9 +39,8 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.3.0
       - name: Test
-        run: |
-          cd tests/macos
-          ./${{ matrix.method }}.sh
+        working-directory: tests/macos
+        run: ./${{ matrix.method }}.sh
   widows:
     name: Windows
     runs-on: windows-latest
