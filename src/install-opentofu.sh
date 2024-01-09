@@ -41,42 +41,48 @@ if [ -t 1 ]; then
     fi
 fi
 
-ROOT_METHOD=auto
+ROOT_METHOD="auto"
 INSTALL_METHOD=""
-DEFAULT_INSTALL_PATH=/opt/opentofu
+DEFAULT_INSTALL_PATH="/opt/opentofu"
 INSTALL_PATH="${DEFAULT_INSTALL_PATH}"
-DEFAULT_SYMLINK_PATH=/usr/local/bin
+DEFAULT_SYMLINK_PATH="/usr/local/bin"
 SYMLINK_PATH="${DEFAULT_SYMLINK_PATH}"
-DEFAULT_OPENTOFU_VERSION=latest
+DEFAULT_OPENTOFU_VERSION="latest"
 OPENTOFU_VERSION="${DEFAULT_OPENTOFU_VERSION}"
-DEFAULT_DEB_GPG_URL=https://get.opentofu.org/opentofu.gpg
+DEFAULT_DEB_GPG_URL="https://get.opentofu.org/opentofu.gpg"
 DEB_GPG_URL="${DEFAULT_DEB_GPG_URL}"
-DEFAULT_DEB_REPO_GPG_URL=https://packages.opentofu.org/opentofu/tofu/gpgkey
+DEFAULT_DEB_REPO_GPG_URL="https://packages.opentofu.org/opentofu/tofu/gpgkey"
 DEB_REPO_GPG_URL="${DEFAULT_DEB_REPO_GPG_URL}"
-DEFAULT_DEB_REPO_URL=https://packages.opentofu.org/opentofu/tofu/any/
-DEB_REPO_URL=${DEFAULT_DEB_REPO_URL}
-DEFAULT_DEB_REPO_SUITE=any
+DEFAULT_DEB_REPO_URL="https://packages.opentofu.org/opentofu/tofu/any/"
+DEB_REPO_URL="${DEFAULT_DEB_REPO_URL}"
+DEFAULT_DEB_REPO_SUITE="any"
 DEB_REPO_SUITE="${DEFAULT_DEB_REPO_SUITE}"
-DEFAULT_DEB_REPO_COMPONENTS=main
+DEFAULT_DEB_REPO_COMPONENTS="main"
 DEB_REPO_COMPONENTS="${DEFAULT_DEB_REPO_COMPONENTS}"
-DEFAULT_RPM_REPO_URL=https://packages.opentofu.org/opentofu/tofu/rpm_any/rpm_any/
+DEFAULT_RPM_REPO_URL="https://packages.opentofu.org/opentofu/tofu/rpm_any/rpm_any/"
 
-RPM_REPO_URL=${DEFAULT_RPM_REPO_URL}
-DEFAULT_RPM_REPO_GPG_URL=https://packages.opentofu.org/opentofu/tofu/gpgkey
-DEFAULT_RPM_GPG_URL=https://get.opentofu.org/opentofu.asc
+RPM_REPO_URL="${DEFAULT_RPM_REPO_URL}"
+DEFAULT_RPM_REPO_GPG_URL="https://packages.opentofu.org/opentofu/tofu/gpgkey"
+DEFAULT_RPM_GPG_URL="https://get.opentofu.org/opentofu.asc"
 RPM_GPG_URL="${DEFAULT_RPM_GPG_URL}"
 RPM_REPO_GPG_URL="${DEFAULT_RPM_REPO_GPG_URL}"
 #TODO once the package makes it into stable change this to "-"
 DEFAULT_APK_REPO_URL="@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing"
-APK_REPO_URL=${DEFAULT_APK_REPO_URL}
+APK_REPO_URL="${DEFAULT_APK_REPO_URL}"
 DEFAULT_APK_PACKAGE="opentofu@testing"
 APK_PACKAGE="${DEFAULT_APK_PACKAGE}"
-DEFAULT_COSIGN_PATH=cosign
-COSIGN_PATH=${DEFAULT_COSIGN_PATH}
-DEFAULT_COSIGN_IDENTITY=autodetect
-COSIGN_IDENTITY=${DEFAULT_COSIGN_IDENTITY}
-DEFAULT_COSIGN_OIDC_ISSUER=https://token.actions.githubusercontent.com
-COSIGN_OIDC_ISSUER=${DEFAULT_COSIGN_OIDC_ISSUER}
+DEFAULT_GPG_PATH="gpg"
+GPG_PATH="${DEFAULT_GPG_PATH}"
+DEFAULT_GPG_URL="https://get.opentofu.org/opentofu.asc"
+GPG_URL="https://get.opentofu.org/opentofu.asc"
+DEFAULT_GPG_KEY_ID="E3E6E43D84CB852EADB0051D0C0AF313E5FD9F80"
+GPG_KEY_ID="${DEFAULT_GPG_KEY_ID}"
+DEFAULT_COSIGN_PATH="cosign"
+COSIGN_PATH="${DEFAULT_COSIGN_PATH}"
+DEFAULT_COSIGN_IDENTITY="autodetect"
+COSIGN_IDENTITY="${DEFAULT_COSIGN_IDENTITY}"
+DEFAULT_COSIGN_OIDC_ISSUER="https://token.actions.githubusercontent.com"
+COSIGN_OIDC_ISSUER="${DEFAULT_COSIGN_OIDC_ISSUER}"
 SKIP_VERIFY=0
 
 # region ZSH
@@ -492,17 +498,17 @@ install_zypper() {
   log_info "Installing OpenTofu using zypper..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
     GPGCHECK=1
-    GPG_URL="${RPM_GPG_URL}"
+    FINAL_GPG_URL="${RPM_GPG_URL}"
     if [ "${RPM_REPO_GPG_URL}" != "-" ]; then
-      GPG_URL=$(cat <<EOF
-${GPG_URL}
+      FINAL_GPG_URL=$(cat <<EOF
+${FINAL_GPG_URL}
        ${RPM_REPO_GPG_URL}
 EOF
 )
     fi
   else
     GPGCHECK=0
-    GPG_URL=""
+    FINAL_GPG_URL=""
   fi
   if ! as_root tee /etc/zypp/repos.d/opentofu.repo; then
     log_error "Failed to write /etc/zypp/repos.d/opentofu.repo"
@@ -514,7 +520,7 @@ baseurl=${RPM_REPO_URL}\$basearch
 repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${GPG_URL}
+gpgkey=${FINAL_GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
@@ -525,12 +531,12 @@ baseurl=${RPM_REPO_URL}SRPMS
 repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${GPG_URL}
+gpgkey=${FINAL_GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
-  for GPG_SRC in ${GPG_URL}; do
+  for GPG_SRC in ${FINAL_GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
     if ! rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
@@ -564,10 +570,10 @@ install_yum() {
   log_info "Installing OpenTofu using yum..."
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
     GPGCHECK=1
-    GPG_URL="${RPM_GPG_URL}"
+    FINAL_GPG_URL="${RPM_GPG_URL}"
     if [ "${RPM_REPO_GPG_URL}" != "-" ]; then
-      GPG_URL=$(cat <<EOF
-${GPG_URL}
+      FINAL_GPG_URL=$(cat <<EOF
+${FINAL_GPG_URL}
        ${RPM_REPO_GPG_URL}
 EOF
 )
@@ -586,7 +592,7 @@ baseurl=${RPM_REPO_URL}\$basearch
 repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${GPG_URL}
+gpgkey=${FINAL_GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
@@ -597,12 +603,12 @@ baseurl=${RPM_REPO_URL}SRPMS
 repo_gpgcheck=${GPGCHECK}
 gpgcheck=${GPGCHECK}
 enabled=1
-gpgkey=${GPG_URL}
+gpgkey=${FINAL_GPG_URL}
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOF
-  for GPG_SRC in ${GPG_URL}; do
+  for GPG_SRC in ${FINAL_GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
     if ! rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
@@ -712,10 +718,18 @@ install_standalone() {
     fi
   fi
 
+  VERIFY_METHOD=-
   if [ "${SKIP_VERIFY}" -ne "1" ]; then
-    if ! command_exists "${COSIGN_PATH}"; then
-      log_error "Cosign is not installed on your system, which is required to verify package integrity."
-      log_info "If you have cosign installed, please pass the --cosign-path option. Alternatively, you can disable integrity verification by passing ${bold}--skip-verify${normal} (not recommended)."
+    if command_exists "${COSIGN_PATH}"; then
+      VERIFY_METHOD="cosign"
+    elif command_exists "${GPG_PATH}"; then
+      VERIFY_METHOD="gpg"
+    else
+      log_error "Additional tools are needed for the installation. Please read the following text carefully!"
+      log_error "${normal}This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system, but neither was found. You have the following options:"
+      log_error "${normal}1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--cosign-path${normal} parameter to your cosign installation."
+      log_error "${normal}2. ${bold}Install GPG${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--gpg-path${normal} parameter to your GPG installation."
+      log_error "${normal}3. ${bold}Disable integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal})."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
     fi
   fi
@@ -726,9 +740,20 @@ install_standalone() {
     log_info "Determining latest OpenTofu version..."
     OPENTOFU_VERSION=$(download_file "https://api.github.com/repos/opentofu/opentofu/releases/latest" - | grep "tag_name" | sed -e 's/.*tag_name": "v//' -e 's/".*//')
     if [ -z "${OPENTOFU_VERSION}" ]; then
-      log_error "Failed to obtain latest release from the GitHub API. Try passing --opentofu-version to specify a version."
+      log_error "Failed to obtain the latest release from the GitHub API. Try passing --opentofu-version to specify a version."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
+  fi
+  if [ "${VERIFY_METHOD}" = "gpg" ]; then
+    for UNSUPPORTED_VERSION in "1.6.0-alpha1" "1.6.0-alpha2" "1.6.0-alpha3" "1.6.0-alpha4" "1.6.0-alpha5" "1.6.0-beta1" "1.6.0-beta2"  "1.6.0-beta3"  "1.6.0-beta4" "1.6.0-beta5" "1.6.0-rc1"; do
+      if [ "${OPENTOFU_VERSION}" = "${UNSUPPORTED_VERSION}" ]; then
+        log_error "Additional tools are needed for the installation. Please read the following text carefully!"
+        log_error "${normal}OpenTofu version ${OPENTOFU_VERSION} is not GPG-signed. This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system. You have GPG installed, but only OpenTofu 1.6.0 and later are GPG-signed. You have the following options:"
+        log_error "${normal}1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--cosign-path${normal} parameter to your cosign installation."
+        log_error "${normal}2. ${bold}Disable integrity verification${normal} with ${magenta}--skip-verify${normal} (${red}not recommended${normal})."
+        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
+      fi
+    done
   fi
   OS="$(uname | tr '[:upper:]' '[:lower:]')"
   ARCH="$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')"
@@ -790,7 +815,7 @@ install_standalone() {
   fi
   log_info "Checksum for ${ZIPFILE} is ${REALSUM}, as expected."
 
-  if [ "${SKIP_VERIFY}" -ne "1" ]; then
+  if [ "${VERIFY_METHOD}" = "cosign" ]; then
     log_info "Performing signature verification..."
     SIGFILE="tofu_${OPENTOFU_VERSION}_SHA256SUMS.sig"
     CERTFILE="tofu_${OPENTOFU_VERSION}_SHA256SUMS.pem"
@@ -832,6 +857,50 @@ install_standalone() {
         return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
     log_info "Verification successful."
+  elif [ "${VERIFY_METHOD}" = "gpg" ]; then
+    log_info "Performing signature verification..."
+
+    log_info "Downloading signature file..."
+    SIGFILE="tofu_${OPENTOFU_VERSION}_SHA256SUMS.gpgsig"
+    if ! download_file "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/${SIGFILE}" "${TEMPDIR}/${SIGFILE}"; then
+      log_error "Failed to download ${SIGFILE} for OpenTofu version ${OPENTOFU_VERSION}."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+
+    log_info "Downloading GPG key..."
+    GPG_FILE="opentofu.asc"
+    GPG_FILE_PATH="${TEMPDIR}/${GPG_FILE}"
+    if ! download_file "${GPG_URL}" "${TEMPDIR}/${GPG_FILE}"; then
+      log_error "Failed to download the GPG key from ${GPG_URL}."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+
+    log_info "Dearmoring GPG key..."
+    if ! "${GPG_PATH}" --dearmor "${GPG_FILE_PATH}"; then
+      log_error "Failed to dearmor the GPG key from ${GPG_URL}."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+    GPG_FILE_PATH="${GPG_FILE_PATH}.gpg"
+
+    log_info "Verifying GPG key fingerprint..."
+    if [ "$("${GPG_PATH}" "--no-default-keyring" "--with-colons" "--show-keys" "--fingerprint" "${GPG_FILE_PATH}" | grep -c "fpr:::::::::${GPG_KEY_ID}:" || true)" -eq 0 ]; then
+      log_error "Key with fingerprint ${GPG_KEY_ID} not found in ${GPG_URL}."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+
+    if ! "${GPG_PATH}" --no-default-keyring --keyring "${GPG_FILE_PATH}" --verify "${TEMPDIR}/${SIGFILE}" "${TEMPDIR}/${SUMSFILE}"; then
+      log_error "Signature verification failed."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+    FINGERPRINT=$("${GPG_PATH}" --no-default-keyring --keyring "${GPG_FILE_PATH}" --verify "${TEMPDIR}/${SIGFILE}" "${TEMPDIR}/${SUMSFILE}" | grep "Primary key fingerprint: " | sed -e 's/^Primary key fingerprint: //' -e 's/ //g')
+    if [ "${FINGERPRINT}" != "${GPG_KEY_ID}" ]; then
+      log_error "The release is signed with the incorrect key: ${FINGERPRINT}."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+    log_info "Signature verified."
+  elif [ "${VERIFY_METHOD}" != "-" ]; then
+    log_error "Bug: unsupported verification method: ${VERIFY_METHOD}"
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Unpacking OpenTofu..."
@@ -906,7 +975,7 @@ ${bold}${blue}OPTIONS for the Debian repository installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_REPO_SUITE}${normal})
   ${bold}--deb-components ${magenta}COMPONENTS${normal}   Debian repository components.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_REPO_COMPONENTS}${normal})
-  ${bold}--deb-gpg-url ${magenta}URL${normal}             The URL where the GPG signing key is located.
+  ${bold}--gpg-url ${magenta}URL${normal}                 The URL where the GPG signing key is located.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_DEB_GPG_URL}${normal})
   ${bold}--deb-repo-gpg-url ${magenta}URL${normal}        Sets the GPG key for the Debian repository.
                                 This is a workaround and may be removed in the future.
@@ -916,7 +985,7 @@ ${bold}${blue}OPTIONS for the RPM repository installation:${normal}
 
   ${bold}--rpm-url ${magenta}URL${normal}                 RPM repository URL.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_RPM_REPO_URL}${normal})
-  ${bold}--rpm-gpg-url ${magenta}URL${normal}             The URL where the GPG signing key is located.
+  ${bold}--gpg-url ${magenta}URL${normal}                 The URL where the GPG signing key is located.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_RPM_GPG_URL}${normal})
   ${bold}--rpm-repo-gpg-url ${magenta}URL${normal}        Sets the GPG key for the RPM repository.
                                 This is a workaround and may be removed in the future.
@@ -944,6 +1013,12 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_COSIGN_OIDC_ISSUER}${normal})
   ${bold}--cosign-identity ${magenta}IDENTITY${normal}    Cosign certificate identity.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_COSIGN_IDENTITY}${normal})
+  ${bold}--gpg-path ${magenta}PATH${normal}               Path to GPG.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_PATH}${normal})
+  ${bold}--gpg-url ${magenta}URL${normal}                 The URL where the GPG signing key is located.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_URL}${normal})
+  ${bold}--gpg-key-id ${magenta}ID{normal}                Key ID (fingerprint) to expect at the GPG URL.
+                                (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_KEY_ID}${normal})
 
   ${bold}Note:${normal} If you do not specify the OpenTofu version, the script calls the GitHub API.
   This API is rate-limited. If you encounter problems, please create a GitHub token at
@@ -1032,6 +1107,44 @@ main() {
             ;;
           *)
             SYMLINK_PATH=$1
+            ;;
+        esac
+        ;;
+      --gpg-path)
+        shift
+        case $1 in
+          "")
+            usage "--gpg-path requires an argument."
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
+            ;;
+        *)
+            GPG_PATH="${1}"
+            ;;
+        esac
+        ;;
+      --gpg-url)
+        shift
+        case $1 in
+          "")
+            usage "--gpg-url requires an argument."
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
+            ;;
+        *)
+            GPG_URL="${1}"
+            DEB_GPG_URL="${1}"
+            RPM_GPG_URL="${1}"
+            ;;
+        esac
+        ;;
+      --gpg-key-id)
+        shift
+        case $1 in
+          "")
+            usage "--gpg-key-id requires an argument."
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
+            ;;
+        *)
+            GPG_KEY_ID="${1}"
             ;;
         esac
         ;;
