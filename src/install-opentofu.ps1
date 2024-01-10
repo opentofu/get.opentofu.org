@@ -1,64 +1,110 @@
 <#
 .SYNOPSIS
 Install OpenTofu.
+
 .DESCRIPTION
 This script installs OpenTofu via any of the supported methods. Please run it with the -h or -help parameter
 to get a detailed help description.
+
 .LINK
 https://opentofu.org
+
 .LINK
 https://opentofu.org/docs/intro/install/
+
 .PARAMETER help
 Show a more detailed help.
+
 .PARAMETER installMethod
 The installation method to use. Must be one of:
 - standalone
+
 .PARAMETER installPath
 Installs OpenTofu to the specified path. (Standalone installation only.)
+
 .PARAMETER opentofuVersion
 Installs the specified OpenTofu version. (Standalone installation only.)
+
 .PARAMETER cosignPath
 Path to cosign. (Standalone installation only.)
+
 .PARAMETER cosignOidcIssuer
 OIDC issuer for cosign signatures. (Standalone installation only.)
+
 .PARAMETER cosignIdentity
 Identity for the cosign signature. (Standalone installation only.)
+
+.PARAMETER gpgPath
+Path for the GPG installation. (Standalone installation only.)
+
+.PARAMETER gpgURL
+URL to download the GPG key from. (Standalone installation only.)
+
+.PARAMETER gpgKeyID
+GPG key ID / fingerprint to expect. (Standalone installation only.)
+
 .PARAMETER skipVerify
-Skip cosign integrity verification. (Standalone installation only; not recommended.)
-.Parameter skipChangePath
+Skip cosign/GPG integrity verification. (Standalone installation only; not recommended.)
+
+.PARAMETER skipChangePath
 Skip changing the user/system PATH variable to include OpenTofu.
-.Parameter allUsers
+
+.PARAMETER allUsers
 Install for all users with elevated privileges.
-.Parameter internalContinue
+
+.PARAMETER internalContinue
 Internal parameter to use for continuing with elevated privileges. Do not use.
-.Parameter internalZipFile
+
+.PARAMETER internalZipFile
 Internal parameter to use for continuing with elevated privileges. Do not use.
+
 .EXAMPLE
 PS> .\install-opentofu.ps1 -installMethod standalone
+
 #>
 param(
     [Parameter(Mandatory = $false)]
     [switch]$help = $false,
+
     [Parameter(Mandatory = $false)]
     [string]$installPath = "",
+
     [Parameter(Mandatory = $false)]
     [string]$opentofuVersion = "latest",
+
     [Parameter(Mandatory = $false)]
     [string]$installMethod,
+
     [Parameter(Mandatory = $false)]
     [string]$cosignPath = "cosign.exe",
+
     [Parameter(Mandatory = $false)]
     [string]$cosignOidcIssuer = "https://token.actions.githubusercontent.com",
+
     [Parameter(Mandatory = $false)]
     [string]$cosignIdentity = "autodetect",
+
+    [Parameter(Mandatory = $false)]
+    [string]$gpgPath = "gpg.exe",
+
+    [Parameter(Mandatory = $false)]
+    [string]$gpgURL = "https://get.opentofu.org/opentofu.asc",
+
+    [Parameter(Mandatory = $false)]
+    [string]$gpgKeyID = "E3E6E43D84CB852EADB0051D0C0AF313E5FD9F80",
+
     [Parameter(Mandatory = $false)]
     [switch]$skipVerify = $false,
+
     [Parameter(Mandatory = $false)]
     [switch]$skipChangePath = $false,
+
     [Parameter(Mandatory = $false)]
     [switch]$allUsers = $false,
+
     [Parameter(Mandatory = $false)]
     [switch]$internalContinue = $false,
+
     [Parameter(Mandatory = $false)]
     [string]$internalZipFile = ""
 )
@@ -86,6 +132,9 @@ if ($allUsers) {
 $defaultCosignPath = "cosign.exe"
 $defaultCosignOidcIssuer = "https://token.actions.githubusercontent.com"
 $defaultCosignIdentity = "autodetect"
+$defaultGPGPath = "gpg.exe"
+$defaultGPGURL = "https://get.opentofu.org/opentofu.asc"
+$defaultGPGKeyID = "E3E6E43D84CB852EADB0051D0C0AF313E5FD9F80"
 
 if (!$opentofuVersion) {
     $opentofuVersion = "latest"
@@ -101,6 +150,15 @@ if (!$cosignOidcIssuer) {
 }
 if (!$cosignIdentity) {
     $cosignIdentity = $defaultCosignIdentity
+}
+if (!$gpgPath) {
+    $gpgPath = $defaultGPGPath
+}
+if (!$gpgURL) {
+    $gpgURL = $defaultGPGURL
+}
+if (!$gpgKeyID) {
+    $gpgKeyID = $defaultGPGKeyID
 }
 
 $exitCodeOK = 0
@@ -230,17 +288,35 @@ function installStandalone() {
     logInfo "Performing standalone installation to ${installPath}..."
 
     if (!$skipVerify) {
-        logInfo("Checking if cosign is available...")
-        $cosignError = "Cosign is not installed but required for the standalone installation. Please install cosign / provide the cosign path with the -cosignPath parameter, disable integrity verification with -skipVerify (not recommended), or select a different installation method."
+        logInfo("Checking if cosign or GPG is available...")
+
+        $cosignAvailable = $false
         try {
             $ErrorActionPreference = 'stop'
-            if(!(Get-Command $cosignPath)){
-                throw [InstallRequirementNotMetException]::new($cosignError)
+            if(Get-Command $cosignPath){
+                $cosignAvailable = $true
             }
-        } catch {
-            throw [InstallRequirementNotMetException]::new($cosignError)
+        } catch {}
+        $ErrorActionPreference = 'continue'
+
+        $gpgAvailable = $false
+        try {
+            $ErrorActionPreference = 'stop'
+            if(Get-Command $gpgPath){
+                $gpgAvailable = $true
+            }
+        } catch {}
+        $ErrorActionPreference = 'continue'
+
+        if ($cosignAvailable) {
+            $verifyMethod = "cosign"
+        } elseif ($gpgAvailable) {
+            $verifyMethod = "gpg"
+        } else {
+            throw [InstallRequirementNotMetException]::new("${bold}Additional tools are needed for the installation. Please read the following text carefully!${normal}`n`nThis installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system, but neither was found. You have the following options:`n`n1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}-cosignPath${normal} parameter to your cosign installation.`n2. ${bold}Install GPG${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}-gpgPath${normal} parameter to your GPG installation.`n3. ${bold}Disable integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal}).")
         }
     } else {
+        $verifyMethod = "-"
         logWarning "Signature verification is disabled. This is not recommended."
     }
 
@@ -278,10 +354,17 @@ function installStandalone() {
         $arch = "386"
     }
 
-    $zipName = "tofu_${opentofuVersion}_windows_${arch}.zip"
-    $sigFile = "tofu_${opentofuVersion}_SHA256SUMS.sig"
-    $certFile = "tofu_${opentofuVersion}_SHA256SUMS.pem"
-    $sumsFile = "tofu_${opentofuVersion}_SHA256SUMS"
+    $zipName    = "tofu_${opentofuVersion}_windows_${arch}.zip"
+    $zipPath    = Join-Path $tempPath $zipName
+    $sigFile    = "tofu_${opentofuVersion}_SHA256SUMS.sig"
+    $sigPath    = Join-Path $tempPath $sigFile
+    $certFile   = "tofu_${opentofuVersion}_SHA256SUMS.pem"
+    $certPath   = Join-Path $tempPath $certFile
+    $gpgSigFile = "tofu_${opentofuVersion}_SHA256SUMS.gpgsig"
+    $gpgSigPath = Join-Path $tempPath $gpgSigFile
+    $sumsFile   = "tofu_${opentofuVersion}_SHA256SUMS"
+    $sumsPath   = Join-Path $tempPath $sumsFile
+    $gpgKeyPath = Join-Path $tempPath "opentofu.asc"
 
     $urlPrefix = "https://github.com/opentofu/opentofu/releases/download/v${opentofuVersion}/"
 
@@ -290,8 +373,19 @@ function installStandalone() {
     $dlFiles += $sumsFile
     if (!$skipVerify)
     {
-        $dlFiles += $sigFile
-        $dlFiles += $certFile
+        if ($verifyMethod -eq "cosign")
+        {
+            $dlFiles += $sigFile
+            $dlFiles += $certFile
+        } elseif ($verifyMethod -eq "gpg") {
+            if (@("1.6.0-alpha1","1.6.0-alpha2","1.6.0-alpha3","1.6.0-alpha4","1.6.0-alpha5","1.6.0-beta1","1.6.0-beta2","1.6.0-beta3","1.6.0-beta4","1.6.0-beta5","1.6.0-rc1").Contains($opentofuVersion)) {
+                throw [InstallRequirementNotMetException]::new("${bold}Additional tools are needed for the installation. Please read the following text carefully!${normal}`n`nOpenTofu version ${opentofuVersion} is not GPG-signed. This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system. You have GPG installed, but only OpenTofu 1.6.0 and later are GPG-signed. You have the following options:`n`n1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}-cosignPath${normal} parameter to your cosign installation.`n2. ${bold}Disable integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal}).")
+            }
+
+            $dlFiles += $gpgSigFile
+        } elseif ($verifyMethod -ne "-") {
+            throw [InstallFailedException]::new("Bug: unsupported verification method: ${verifyMethod}.")
+        }
     }
 
     try {
@@ -305,44 +399,105 @@ function installStandalone() {
                 Invoke-WebRequest -outfile "${target}" -uri "${uri}"
             } catch {
                 $msg = $_.ToString()
-                throw [InstallFailedException]::new("Failed to download OpenTofu release ${opentofuVersion}. (${msg})")
+                throw [InstallFailedException]::new("Failed to download OpenTofu ${opentofuVersion} release file ${dlFiles[i]}. (${msg})")
             }
             logInfo "Download of ${target} complete."
         }
 
+        if ($verifyMethod -eq "gpg")
+        {
+            logInfo "Fetching OpenTofu GPG key from ${gpgURL}..."
+            try
+            {
+                Invoke-WebRequest -outfile "${gpgKeyPath}" -uri "${gpgURL}"
+            }
+            catch
+            {
+                $msg = $_.ToString()
+                throw [InstallFailedException]::new("Failed to download OpenTofu GPG key from ${gpgURL}. (${msg})")
+            }
+            logInfo "GPG key download complete."
+
+            logInfo "Dearmoring GPG key..."
+            & $gpgPath --dearmor ${gpgKeyPath}
+            if (!$?) {
+                throw [InstallFailedException]::new("Failed to dearmor GPG file from ${gpgURL}.")
+            }
+            $gpgKeyPath = "${gpgKeyPath}.gpg"
+
+            logInfo "Verifying GPG key fingerprint..."
+            $gpgOutput = (& $gpgPath "--no-default-keyring" "--with-colons" "--show-keys" "--fingerprint" "${gpgKeyPath}" 2>&1)
+            if (!$?) {
+                throw [InstallFailedException]::new("Failed to parse GPG file from ${gpgURL}.")
+            }
+            if (!$gpgOutput.Contains("fpr:::::::::${gpgKeyID}:")) {
+                throw [InstallFailedException]::new("The downloaded GPG file from ${gpgURL} does not contain a key with the fingerprint ${gpgKeyID}.")
+            }
+            logInfo "Verifying GPG key fingerprint verified."
+        }
+
         logInfo "Verifying checksum..."
-        $expectedHash = $((Get-Content (Join-Path $tempPath $sumsFile) | Select-String -Pattern $zipName) -split '\s+')[0]
-        $realHash = $(Get-FileHash -Algorithm SHA256 (Join-Path $tempPath $zipName)).Hash
+        $expectedHash = $((Get-Content $sumsPath | Select-String -Pattern $zipName) -split '\s+')[0]
+        $realHash = $(Get-FileHash -Algorithm SHA256 $zipPath).Hash
         if ($realHash -ne $expectedHash) {
-            logWarning "Checksums don't match"
+            logWarning "Checksums don't match."
             throw [InstallFailedException]::new("Checksum mismatch, expected: ${expectedHash}, got: ${realHash}")
         }
         logInfo "Checksums match."
 
-        if (!$skipVerify)
+        if ($verifyMethod -eq "cosign")
         {
-            if ($cosignIdentity -eq "autodetect") {
-                if ($opentofuVersion -in "1.6.0-beta4","1.6.0-beta3","1.6.0-beta2","1.6.0-beta1","1.6.0-alpha5","1.6.0-alpha4","1.6.0-alpha3","1.6.0-alpha2","1.6.0-alpha1") {
+            if ($cosignIdentity -eq "autodetect")
+            {
+                if ($opentofuVersion -in "1.6.0-beta4", "1.6.0-beta3", "1.6.0-beta2", "1.6.0-beta1", "1.6.0-alpha5", "1.6.0-alpha4", "1.6.0-alpha3", "1.6.0-alpha2", "1.6.0-alpha1")
+                {
                     $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
-                } else {
-                    if ($opentofuVersion.Contains("-alpha") -or $opentofuVersion.Contains("-beta")) {
-                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
-                    } else {
+                }
+                else
+                {
+                    if ($opentofuVersion.Contains("-alpha") -or $opentofuVersion.Contains("-beta"))
+                    {
+                        $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
+                    }
+                    else
+                    {
                         $ver = [version]($opentofuVersion -replace "-rc.*")
                         $major = $ver.Major
                         $minor = $ver.Minor
-                        $cosignIdentity="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${major}.${minor}"
+                        $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${major}.${minor}"
                     }
                 }
             }
 
             logInfo "Verifying signature against cosign identity ${cosignIdentity}..."
-            & $cosignPath verify-blob --certificate-identity $cosignIdentity --signature "${tempPath}/${sigFile}" --certificate "${tempPath}/${certFile}" --certificate-oidc-issuer $cosignOidcIssuer "${tempPath}/${sumsFile}"
-            if($?) {
+            logInfo "Running $cosignPath verify-blob --certificate-identity $cosignIdentity --signature $sigPath --certificate $certPath --certificate-oidc-issuer $cosignOidcIssuer $sumsPath"
+            & $cosignPath verify-blob --certificate-identity $cosignIdentity --signature $sigPath --certificate $certPath --certificate-oidc-issuer $cosignOidcIssuer $sumsPath
+            if ($?)
+            {
                 logInfo "Signature verified."
-            } else {
-                throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with cosign. (${msg})")
             }
+            else
+            {
+                throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with cosign.")
+            }
+        } elseif ($verifyMethod -eq "gpg") {
+            logInfo "Verifying GPG signature..."
+            $gpgOutput = & $gpgPath --no-default-keyring --keyring $gpgKeyPath --verify $gpgSigPath $sumsPath 2>&1
+            if ($?) {
+                $fingerprint = ($gpgOutput | Select-String -Pattern "^Primary key fingerprint: ").Replace("Primary key fingerprint: ", "").Replace(" ","")
+
+                if ($fingerprint -ne $gpgKeyID) {
+                    throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with GPG, primary key fingerprint mismatch: ${fingerprint}")
+                }
+
+                logInfo "Signature verified."
+            }
+            else
+            {
+                throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with GPG. (${gpgOutput})")
+            }
+        } elseif ($verifyMethod -ne "-") {
+            throw [InstallFailedException]::new("Bug: unsupported verification method: ${verifyMethod}.")
         }
 
         $internalZipFile = Join-Path $tempPath $zipName
@@ -440,6 +595,11 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${defaultOpenTofuVersion}${normal})
   ${bold}-installPath ${magenta}PATH${normal}             Installs OpenTofu to the specified path.
                                 (${bold}Default:${normal} ${magenta}${defaultInstallPath}${normal})
+  ${bold}-gpgPath ${magenta}PATH${normal}                 Path to GPG. (${bold}Default:${normal} ${magenta}${defaultGPGPath}${normal})
+  ${bold}-gpgURL ${magenta}URL${normal}                   URL of the GPG key to use (without ASCII-armor)
+                                (${bold}Default:${normal} ${magenta}${defaultGPGURL}${normal})
+  ${bold}-gpgKeyID ${magenta}ID${normal}                  GPG key ID to expect the gpgURL.
+                                (${bold}Default:${normal} ${magenta}${defaultGPGKeyID}${normal})
   ${bold}-cosignPath ${magenta}PATH${normal}              Path to cosign. (${bold}Default:${normal} ${magenta}${defaultCosignPath}${normal})
   ${bold}-cosignOidcIssuer ${magenta}ISSUER${normal}      OIDC issuer for cosign verification.
                                 (${bold}Default:${normal} ${magenta}${defaultCosignOidcIssuer}${normal})
@@ -453,9 +613,9 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
 
       ${bold}`$Env:GITHUB_TOKEN = "gha_..."${normal}
 
-  ${bold}Signature verification:${normal} This installation method uses cosign to verify the integrity
-  of the downloaded binaries by default. Please install cosign or disable signature
-  verification by specifying -skipVerify to disable it (not recommended).
+  ${bold}Signature verification:${normal} This installation method uses cosign or GPG
+  to verify the integrity of the downloaded binaries by default. Please install cosign
+  or disable signature verification by specifying ${bold}-skipVerify${normal} to disable it (not recommended).
   See https://docs.sigstore.dev/system_config/installation/ for details.
 
 ${bold}${blue}Exit codes:${normal}
