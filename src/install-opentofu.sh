@@ -1005,10 +1005,8 @@ main() {
             return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
             ;;
           *)
-            if [ -z "$1" ]; then
-              usage "Invalid value for --install-method: $1."
-              return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
-            fi
+            usage "Invalid value for --install-method: $1."
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
         esac
         ;;
       --install-path)
@@ -1231,11 +1229,11 @@ main() {
     return $?
     ;;
   "")
-    log_error "Please select an installation method with --install-method."
+    usage "Please select an installation method with --install-method."
     return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
     ;;
   *)
-    log_error "Usupported installation method: ${INSTALL_METHOD}."
+    usage "Unsupported installation method: ${INSTALL_METHOD}."
     return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
   esac
 }
