@@ -883,7 +883,7 @@ install_standalone() {
     GPG_FILE_PATH="${GPG_FILE_PATH}.gpg"
 
     log_info "Verifying GPG key fingerprint..."
-    if [ "$("${GPG_PATH}" "--no-default-keyring" "--with-colons" "--show-keys" "--fingerprint" "${GPG_FILE_PATH}" 2>&1 | grep -c "fpr:::::::::${GPG_KEY_ID}:" || true)" -eq 0 ]; then
+    if [ "$("${GPG_PATH}" "--no-default-keyring" "--with-colons" "--show-keys" "--fingerprint" "${GPG_FILE_PATH}" | grep -c "fpr:::::::::${GPG_KEY_ID}:" || true)" -eq 0 ]; then
       log_error "Key with fingerprint ${GPG_KEY_ID} not found in ${GPG_URL}."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
@@ -892,7 +892,7 @@ install_standalone() {
       log_error "Signature verification failed."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
-    FINGERPRINT=$("${GPG_PATH}" --no-default-keyring --keyring "${GPG_FILE_PATH}" --verify "${TEMPDIR}/${SIGFILE}" "${TEMPDIR}/${SUMSFILE}" | grep "Primary key fingerprint: " | sed -e 's/^Primary key fingerprint: //' -e 's/ //g')
+    FINGERPRINT=$("${GPG_PATH}" --no-default-keyring --keyring "${GPG_FILE_PATH}" --verify "${TEMPDIR}/${SIGFILE}" "${TEMPDIR}/${SUMSFILE}" 2>&1 | grep "Primary key fingerprint: " | sed -e 's/^Primary key fingerprint: //' -e 's/ //g')
     if [ "${FINGERPRINT}" != "${GPG_KEY_ID}" ]; then
       log_error "The release is signed with the incorrect key: ${FINGERPRINT}."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
