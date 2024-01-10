@@ -729,7 +729,7 @@ install_standalone() {
       log_error "${normal}This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system, but neither was found. You have the following options:"
       log_error "${normal}1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--cosign-path${normal} parameter to your cosign installation."
       log_error "${normal}2. ${bold}Install GPG${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--gpg-path${normal} parameter to your GPG installation."
-      log_error "${normal}3. ${bold}Disable integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal})."
+      log_error "${normal}3. ${bold}Disabling integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal})."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
     fi
   fi
