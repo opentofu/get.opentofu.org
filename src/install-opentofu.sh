@@ -1302,6 +1302,18 @@ main() {
             ;;
         esac
         ;;
+      --opentofu-version)
+        shift
+        case $1 in
+          "")
+            usage "--opentofu-version requires an argument."
+            return "${TOFU_INSTALL_EXIT_CODE_INVALID_ARGUMENT}"
+            ;;
+        *)
+            OPENTOFU_VERSION="${1}"
+            ;;
+        esac
+        ;;
       --skip-verify)
         SKIP_VERIFY=1
         log_warning "Skipping integrity verification. This is not recommended."
