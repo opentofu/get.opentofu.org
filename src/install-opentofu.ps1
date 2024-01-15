@@ -481,21 +481,28 @@ function installStandalone() {
                 throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with cosign.")
             }
         } elseif ($verifyMethod -eq "gpg") {
+
+            $env:GPGHOME = ${tempPath}
+
+            logInfo "Importing GPG key..."
+            $gpgOutput = & $gpgPath --homedir $tempPath --import $gpgKeyPath
+            if (!$?) {
+                throw [InstallFailedException]::new("Failed to import the GPG key for OpenTofu. (${gpgOutput})")
+            }
+
+            logInfo "Trusting GPG key..."
+            $gpgOutput = & $gpgPath --homedir $tempPath --tofu-policy good $gpgKeyID
+            if (!$?) {
+                throw [InstallFailedException]::new("Failed to trust the GPG key for OpenTofu. Possible fingerprint mismatch? (${gpgOutput})")
+            }
+
             logInfo "Verifying GPG signature..."
-            $gpgOutput = & $gpgPath --no-default-keyring --keyring $gpgKeyPath --verify $gpgSigPath $sumsPath 2>&1
-            if ($?) {
-                $fingerprint = ($gpgOutput | Select-String -Pattern "^Primary key fingerprint: ").Replace("Primary key fingerprint: ", "").Replace(" ","")
-
-                if ($fingerprint -ne $gpgKeyID) {
-                    throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with GPG, primary key fingerprint mismatch: ${fingerprint}")
-                }
-
-                logInfo "Signature verified."
+            $gpgOutput = & $gpgPath --homedir $tempPath --trust-model tofu --verify $gpgSigPath $sumsPath
+            if (!$?) {
+                throw [InstallFailedException]::new("Failed to verify OpenTofu ${opentofuVersion} with GPG. ($?, $LASTEXITCODE, ${gpgOutput})")
             }
-            else
-            {
-                throw [InstallFailedException]::new("Failed to verify ${opentofuVersion} with GPG. (${gpgOutput})")
-            }
+
+            logInfo "Signature verified."
         } elseif ($verifyMethod -ne "-") {
             throw [InstallFailedException]::new("Bug: unsupported verification method: ${verifyMethod}.")
         }
