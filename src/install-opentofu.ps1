@@ -621,7 +621,7 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
       ${bold}`$Env:GITHUB_TOKEN = "gha_..."${normal}
 
   ${bold}Signature verification:${normal} This installation method uses cosign or GPG
-  to verify the integrity of the downloaded binaries by default. Please install cosign
+  to verify the integrity of the downloaded binaries by default. Please install cosign or gpg
   or disable signature verification by specifying ${bold}-skipVerify${normal} to disable it (not recommended).
   See https://docs.sigstore.dev/system_config/installation/ for details.
 
