@@ -3,7 +3,10 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "nodenext",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext",
+      "webworker"
+    ],
     "types": ["@cloudflare/workers-types"]
   }
 }
