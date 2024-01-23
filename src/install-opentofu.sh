@@ -538,7 +538,7 @@ metadata_expire=300
 EOF
   for GPG_SRC in ${FINAL_GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
-    if ! rpm --import "${GPG_SRC}"; then
+    if ! as_root rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
@@ -610,7 +610,7 @@ metadata_expire=300
 EOF
   for GPG_SRC in ${FINAL_GPG_URL}; do
     log_debug "Importing GPG key from ${GPG_SRC}..."
-    if ! rpm --import "${GPG_SRC}"; then
+    if ! as_root rpm --import "${GPG_SRC}"; then
       log_error "Failed to import GPG key from ${GPG_SRC}."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
