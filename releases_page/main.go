@@ -115,7 +115,7 @@ func main() {
 
 		// Create directory for each release
 		if err := os.Mkdir(path, 0755); err != nil && !os.IsExist(err) {
-			fmt.Println(fmt.Sprintf("Error creating %s directory: ",version), err)
+			fmt.Println(fmt.Sprintf("Error creating %s directory: ", version), err)
 			return
 		}
 
