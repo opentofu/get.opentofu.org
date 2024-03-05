@@ -371,6 +371,21 @@ deb_download_gpg() {
   return "${TOFU_INSTALL_EXIT_CODE_OK}"
 }
 
+# This function sets permissions for the OpenTofu sources list file.
+set_sources_list_permissions() {
+  if ! as_root chown root:root "/etc/apt/sources.list.d/opentofu.list"; then
+    log_error "Failed to chown /etc/apt/sources.list.d/opentofu.list."
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+  fi
+
+  if ! as_root chmod a+r "/etc/apt/sources.list.d/opentofu.list"; then
+    log_error "Failed to chmod /etc/apt/sources.list.d/opentofu.list."
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+  fi
+
+  return "${TOFU_INSTALL_EXIT_CODE_OK}"
+}
+
 # This function installs OpenTofu via a Debian repository. It returns
 # $TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET if this is not a Debian system.
 install_deb() {
@@ -468,6 +483,12 @@ EOF
 deb [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 deb-src [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 EOF
+  fi
+  
+  log_debug "Changing ownership and permissions of /etc/apt/sources.list.d/opentofu.list..."
+  if ! set_sources_list_permissions; then
+    log_error "Failed to set permissions for /etc/apt/sources.list.d/opentofu.list."
+    return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
 
   log_info "Updating package list..."
