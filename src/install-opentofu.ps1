@@ -378,10 +378,6 @@ function installStandalone() {
             $dlFiles += $sigFile
             $dlFiles += $certFile
         } elseif ($verifyMethod -eq "gpg") {
-            if (@("1.6.0-alpha1","1.6.0-alpha2","1.6.0-alpha3","1.6.0-alpha4","1.6.0-alpha5","1.6.0-beta1","1.6.0-beta2","1.6.0-beta3","1.6.0-beta4","1.6.0-beta5","1.6.0-rc1").Contains($opentofuVersion)) {
-                throw [InstallRequirementNotMetException]::new("${bold}Additional tools are needed for the installation. Please read the following text carefully!${normal}`n`nOpenTofu version ${opentofuVersion} is not GPG-signed. This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system. You have GPG installed, but only OpenTofu 1.6.0 and later are GPG-signed. You have the following options:`n`n1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}-cosignPath${normal} parameter to your cosign installation.`n2. ${bold}Disable integrity verification${normal} with ${magenta}-skipVerify${normal} (${red}not recommended${normal}).")
-            }
-
             $dlFiles += $gpgSigFile
         } elseif ($verifyMethod -ne "-") {
             throw [InstallFailedException]::new("Bug: unsupported verification method: ${verifyMethod}.")
@@ -449,23 +445,16 @@ function installStandalone() {
         {
             if ($cosignIdentity -eq "autodetect")
             {
-                if ($opentofuVersion -in "1.6.0-beta4", "1.6.0-beta3", "1.6.0-beta2", "1.6.0-beta1", "1.6.0-alpha5", "1.6.0-alpha4", "1.6.0-alpha3", "1.6.0-alpha2", "1.6.0-alpha1")
+                if ($opentofuVersion.Contains("-alpha") -or $opentofuVersion.Contains("-beta"))
                 {
-                    $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
+                    $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
                 }
                 else
                 {
-                    if ($opentofuVersion.Contains("-alpha") -or $opentofuVersion.Contains("-beta"))
-                    {
-                        $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
-                    }
-                    else
-                    {
-                        $ver = [version]($opentofuVersion -replace "-rc.*")
-                        $major = $ver.Major
-                        $minor = $ver.Minor
-                        $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${major}.${minor}"
-                    }
+                    $ver = [version]($opentofuVersion -replace "-rc.*")
+                    $major = $ver.Major
+                    $minor = $ver.Minor
+                    $cosignIdentity = "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${major}.${minor}"
                 }
             }
 
