@@ -83,13 +83,6 @@ func realMain() int {
 		return 1
 	}
 
-	// Create main index.html file
-	htmlFile, err := os.Create(htmlFileName)
-	if err != nil {
-		fmt.Println("Error creating main HTML file: ", err)
-		return 1
-	}
-
 	// Function to remove the first character of a string
 	funcMap := template.FuncMap{
 		"trimV": func(s string) string {
@@ -107,9 +100,17 @@ func realMain() int {
 		return 1
 	}
 
+	// Create main index.html file
+	htmlFile, err := os.Create(htmlFileName)
+	if err != nil {
+		fmt.Println("Error creating main HTML file: ", err)
+		return 1
+	}
+
 	// Execute the mainPage template and write to the main index.html
 	if err := mainPageTmpl.Execute(htmlFile, releases); err != nil {
 		fmt.Println("Error executing mainPage template: ", err)
+		htmlFile.Close()
 		return 1
 	}
 
@@ -149,6 +150,7 @@ func realMain() int {
 		if assets, ok := release["assets"].([]interface{}); ok {
 			if err := releasePageTmpl.Execute(htmlFile, assets); err != nil {
 				fmt.Println(fmt.Sprintf("Error executing releasePage template for %s%s: ", path, htmlFileName), err)
+				htmlFile.Close()
 				return 1
 			}
 		}
