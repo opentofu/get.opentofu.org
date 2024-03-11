@@ -34,10 +34,25 @@ const (
 )
 
 func main() {
-	os.Exit(realMain())
+	os.Exit(generateReleasePages())
 }
 
-func realMain() int {
+// Function to handle errors and close file
+func handleFileClose(file *os.File, err error) bool {
+	if err != nil {
+		if file != nil {
+			// Close the file if it's open
+			closeErr := file.Close()
+			if closeErr != nil {
+				fmt.Printf("Error closing file: %s\n", closeErr)
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func generateReleasePages() int {
 	const (
 		githubAPIEndpoint = "https://api.github.com/repos/opentofu/opentofu/releases"
 		htmlFileName      = "index.html"
@@ -57,9 +72,7 @@ func realMain() int {
 		fmt.Println("Error creating request: ", err)
 		return 1
 	}
-	// Set custom user-agent in request header
 	req.Header.Set("User-Agent", "opentofu releases page")
-	// Set token in request header
 	req.Header.Set("Authorization", "token "+token)
 
 	// Fetch releases from GitHub API
@@ -102,15 +115,14 @@ func realMain() int {
 
 	// Create main index.html file
 	htmlFile, err := os.Create(htmlFileName)
-	if err != nil {
+	if handleFileClose(htmlFile, err) {
 		fmt.Println("Error creating main HTML file: ", err)
 		return 1
 	}
 
 	// Execute the mainPage template and write to the main index.html
-	if err := mainPageTmpl.Execute(htmlFile, releases); err != nil {
+	if err := mainPageTmpl.Execute(htmlFile, releases); handleFileClose(htmlFile, err) {
 		fmt.Println("Error executing mainPage template: ", err)
-		htmlFile.Close()
 		return 1
 	}
 
@@ -141,16 +153,15 @@ func realMain() int {
 
 		// Create index.html file for release page
 		htmlFile, err := os.Create(path + htmlFileName)
-		if err != nil {
+		if handleFileClose(htmlFile, err) {
 			fmt.Println(fmt.Sprintf("Error creating HTML file, %s%s: ", path, htmlFileName), err)
 			return 1
 		}
 
 		// Execute releasePage template and write to releases' index.html
 		if assets, ok := release["assets"].([]interface{}); ok {
-			if err := releasePageTmpl.Execute(htmlFile, assets); err != nil {
+			if err := releasePageTmpl.Execute(htmlFile, assets); handleFileClose(htmlFile, err) {
 				fmt.Println(fmt.Sprintf("Error executing releasePage template for %s%s: ", path, htmlFileName), err)
-				htmlFile.Close()
 				return 1
 			}
 		}
@@ -161,6 +172,5 @@ func realMain() int {
 			return 1
 		}
 	}
-
 	return 0
 }
