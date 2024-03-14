@@ -765,17 +765,7 @@ install_standalone() {
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   fi
-  if [ "${VERIFY_METHOD}" = "gpg" ]; then
-    for UNSUPPORTED_VERSION in "1.6.0-alpha1" "1.6.0-alpha2" "1.6.0-alpha3" "1.6.0-alpha4" "1.6.0-alpha5" "1.6.0-beta1" "1.6.0-beta2"  "1.6.0-beta3"  "1.6.0-beta4" "1.6.0-beta5" "1.6.0-rc1"; do
-      if [ "${OPENTOFU_VERSION}" = "${UNSUPPORTED_VERSION}" ]; then
-        log_error "Additional tools are needed for the installation. Please read the following text carefully!"
-        log_error "${normal}OpenTofu version ${OPENTOFU_VERSION} is not GPG-signed. This installer tries to verify that the OpenTofu version downloaded has been ${bold}signed by OpenTofu and has not been tampered with${normal}. This is only possible if either cosign or GPG is installed on the system. You have GPG installed, but only OpenTofu 1.6.0 and later are GPG-signed. You have the following options:"
-        log_error "${normal}1. ${bold}Install cosign${normal} and add it to your ${magenta}PATH${normal} or provide the ${magenta}--cosign-path${normal} parameter to your cosign installation."
-        log_error "${normal}2. ${bold}Disable integrity verification${normal} with ${magenta}--skip-verify${normal} (${red}not recommended${normal})."
-        return "${TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET}"
-      fi
-    done
-  fi
+
   OS="$(uname | tr '[:upper:]' '[:lower:]')"
   ARCH="$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')"
   if [ -z "${OS}" ]; then
@@ -849,22 +839,10 @@ install_standalone() {
 
     IDENTITY="${COSIGN_IDENTITY}"
     if [ "${IDENTITY}" = "autodetect" ]; then
-      if [ "${OPENTOFU_VERSION}" = "1.6.0-beta4" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-beta3" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-beta2" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-beta1" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-alpha5" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-alpha4" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-alpha3" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-alpha2" ] || \
-         [ "${OPENTOFU_VERSION}" = "1.6.0-alpha1" ]; then
-          IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/tags/v${OPENTOFU_VERSION}"
+      if [ "$(echo "${OPENTOFU_VERSION}" | grep -c "alpha" || true)" -ne "0" ] || [ "$(echo "${OPENTOFU_VERSION}" | grep -c "beta" || true)" -ne "0" ]; then
+        IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
       else
-        if [ "$(echo "${OPENTOFU_VERSION}" | grep -c "alpha" || true)" -ne "0" ] || [ "$(echo "${OPENTOFU_VERSION}" | grep -c "beta" || true)" -ne "0" ]; then
-          IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/main"
-        else
-          IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v$(echo "${OPENTOFU_VERSION}" | sed -e "s/\([0-9]*\)\.\([0-9]*\)\..*/\1.\2/")"
-        fi
+        IDENTITY="https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v$(echo "${OPENTOFU_VERSION}" | sed -e "s/\([0-9]*\)\.\([0-9]*\)\..*/\1.\2/")"
       fi
     fi
 
