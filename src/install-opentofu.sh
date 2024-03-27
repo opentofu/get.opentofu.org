@@ -469,6 +469,12 @@ deb [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 deb-src [trusted] ${DEB_REPO_URL} ${DEB_REPO_SUITE} ${DEB_REPO_COMPONENTS}
 EOF
   fi
+  
+  # sets permissions for the OpenTofu sources list file, for the installation to work in hardened environments
+  log_debug "Changing permissions of /etc/apt/sources.list.d/opentofu.list..."
+  if ! as_root chmod a+r "/etc/apt/sources.list.d/opentofu.list"; then
+    log_error "Failed to chmod /etc/apt/sources.list.d/opentofu.list."
+  fi
 
   log_info "Updating package list..."
   if ! as_root apt-get update; then
