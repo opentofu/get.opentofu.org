@@ -1,0 +1,20 @@
+{{- /*gotype: github.com/opentofu/get.opentofu.org/releases_generator.Version*/ -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenTofu {{ .ID }}</title>
+</head>
+<body>
+<ul>
+    <li>
+        <a href="/tofu/">../</a>
+    </li>
+    {{- $id := .ID}}
+    {{- range .Files }}
+        <li>
+            <a href="https://github.com/opentofu/opentofu/releases/download/v{{- $id -}}/{{- . -}}">{{- . -}}</a>
+        </li>
+    {{- end -}}
+</ul>
+</body>
+</html>

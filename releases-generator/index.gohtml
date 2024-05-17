@@ -1,3 +1,4 @@
+{{- /*gotype: github.com/opentofu/get.opentofu.org/releases_generator.Index*/ -}}
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,7 +6,9 @@
 </head>
 <body>
 <ul>
-    <li><a href="/releases/tofu/1.7.1/">tofu_1.7.1</a>
+    {{- range .Versions -}}
+        <li><a href="/tofu/{{ .ID }}/">tofu_{{ .ID }}</a></li>
+    {{- end -}}
 </ul>
 </body>
 </html>
