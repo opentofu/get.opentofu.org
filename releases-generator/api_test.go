@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	releases_generator "github.com/opentofu/get.opentofu.org/releases-generator"
-	"github.com/opentofu/get.opentofu.org/releases-generator/internal/github"
+	"github.com/opentofu/get.opentofu.org/releases-generator/github"
 )
 
 func TestGenerator_Generate(t *testing.T) {

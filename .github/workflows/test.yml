@@ -39,7 +39,7 @@ jobs:
       - name: Install shellcheck
         run: sudo apt-get install -y shellcheck
       - name: Run shellcheck
-        working-directory: src
+        working-directory: static
         run: shellcheck -o all install-opentofu.sh
   linux:
     name: Linux
