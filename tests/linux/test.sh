@@ -46,7 +46,7 @@ if [ -n "${DOCKER_INIT}" ]; then
 fi
 CID=$(\
 docker create -tq \
-  -v "$(realpath "$(pwd)/../../src"):/src" \
+  -v "$(realpath "$(pwd)/../../static"):/static" \
   -v "$(realpath "$(pwd)/../"):/tests" \
   -e "DISTRO=${DISTRO}" \
   -e "METHOD=${METHOD}" \

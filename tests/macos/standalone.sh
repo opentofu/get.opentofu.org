@@ -2,6 +2,6 @@
 
 set -ex
 
-../../src/install-opentofu.sh --debug --install-method "standalone"
+../../static/install-opentofu.sh --debug --install-method "standalone"
 
 tofu --version
