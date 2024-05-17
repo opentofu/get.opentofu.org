@@ -19,6 +19,6 @@ $PSDefaultParameterValues['*:ErrorAction']='Stop'
 
 & ".\in-sandbox\methods\${method}.ps1"
 
-& '..\..\src\install-opentofu.ps1' -installMethod "${method}"
+& '..\..\static\install-opentofu.ps1' -installMethod "${method}"
 
 tofu --version
