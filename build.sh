@@ -2,6 +2,5 @@
 
 set -euo pipefail
 
-mkdir -p dist/
-rsync -avz src/ dist/
+cp -rf ./src ./dist
 go run releases-generator/cmd/main.go dist/tofu/
