@@ -47,7 +47,7 @@ func (g *generator) Generate() (map[string][]byte, error) {
 
 	result["index.html"], err = renderTemplate(indexTemplate, index)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal index.html file: %w", err)
+		return nil, fmt.Errorf("failed to render the index.html file: %w", err)
 	}
 
 	for _, version := range index.Versions {
