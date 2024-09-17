@@ -994,7 +994,7 @@ ${bold}${blue}OPTIONS for the standalone installation:${normal}
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_PATH}${normal})
   ${bold}--gpg-url ${magenta}URL${normal}                 The URL where the GPG signing key is located.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_URL}${normal})
-  ${bold}--gpg-key-id ${magenta}ID{normal}                Key ID (fingerprint) to expect at the GPG URL.
+  ${bold}--gpg-key-id ${magenta}ID${normal}               Key ID (fingerprint) to expect at the GPG URL.
                                 (${bold}Default:${normal} ${magenta}${DEFAULT_GPG_KEY_ID}${normal})
 
   ${bold}Note:${normal} If you do not specify the OpenTofu version, the script calls the GitHub API.
