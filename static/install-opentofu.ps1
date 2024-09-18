@@ -1,4 +1,8 @@
 <#
+Copyright (c) The OpenTofu Authors
+SPDX-License-Identifier: Apache-2.0
+License: https://github.com/opentofu/get.opentofu.org/blob/main/LICENSE
+
 .SYNOPSIS
 Install OpenTofu.
 
@@ -11,6 +15,9 @@ https://opentofu.org
 
 .LINK
 https://opentofu.org/docs/intro/install/
+
+.LINK
+https://github.com/opentofu/get.opentofu.org/blob/main/LICENSE
 
 .PARAMETER help
 Show a more detailed help.
