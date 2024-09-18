@@ -1,4 +1,6 @@
 #!/bin/sh
+# Copyright (c) The OpenTofu Authors
+# SPDX-License-Identifier: Apache-2.0
 
 # OpenTofu Installer
 #
