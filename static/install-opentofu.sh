@@ -5,6 +5,7 @@
 # OpenTofu Installer
 #
 # This script installs OpenTofu via any of the supported methods.
+# License: https://github.com/opentofu/get.opentofu.org/blob/main/LICENSE
 
 export TOFU_INSTALL_EXIT_CODE_OK=0
 export TOFU_INSTALL_EXIT_CODE_INSTALL_REQUIREMENTS_NOT_MET=1
