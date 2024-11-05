@@ -355,7 +355,7 @@ function installStandalone() {
     logInfo "Downloading OpenTofu version ${opentofuVersion}..."
 
     $tempPath = tempdir
-    if ((Get-CimInstance Win32_operatingsystem).OSArchitecture -eq "64-bit") {
+    if ([Environment]::Is64BitOperatingSystem) {
         $arch = "amd64"
     } else {
         $arch = "386"
