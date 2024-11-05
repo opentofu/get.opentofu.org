@@ -36,5 +36,6 @@ if [ -n "${INIT}" ] && [ "${INIT}" != "-" ]; then
   exec ${INIT}
 else
   echo "Setup complete."
+  set -x
   exec /tests/linux/in-container/run-test.sh
 fi
