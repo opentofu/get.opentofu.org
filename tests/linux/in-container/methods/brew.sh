@@ -5,7 +5,7 @@ case "$DISTRO" in
     apt-get install -y git build-essential gcc procps curl file bash
     ;;
   ubuntu)
-    apt-get install -y git build-essential gcc procps curl file  bash
+    apt-get install -y git build-essential gcc procps curl file bash
     ;;
   alpine)
     #apk add git gcc bash curl ruby gcompat
@@ -13,8 +13,7 @@ case "$DISTRO" in
     exit 0
     ;;
   fedora | rocky)
-    yum install -y procps-ng curl file git gcc  bash
-    yum groupinstall -y 'Development Tools'
+    dnf install -y procps-ng curl file git gcc bash
     ;;
   opensuse)
     zypper install -y file git gcc tar bash ruby gzip
