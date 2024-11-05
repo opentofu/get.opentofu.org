@@ -740,7 +740,7 @@ install_standalone() {
 
   if [ "${OPENTOFU_VERSION}" = "latest" ]; then
     log_info "Determining latest OpenTofu version..."
-    OPENTOFU_VERSION=$(download_file "https://api.github.com/repos/opentofu/opentofu/releases/latest" - | grep "tag_name" | sed -e 's/.*tag_name":\s*"v//' -e 's/".*//')
+    OPENTOFU_VERSION=$(download_file "https://api.github.com/repos/opentofu/opentofu/releases/latest" - | grep "tag_name" | sed -e 's/.*tag_name":"v//' -e 's/".*//')
     if [ -z "${OPENTOFU_VERSION}" ]; then
       log_error "Failed to obtain the latest release from the GitHub API. Try passing --opentofu-version to specify a version."
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
