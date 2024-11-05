@@ -14,7 +14,6 @@ case "$DISTRO" in
     ;;
   fedora | rocky)
     dnf install -y procps-ng curl file git gcc bash
-    #dnf group install -y 'Development Tools'
     ;;
   opensuse)
     zypper install -y file git gcc tar bash ruby gzip
