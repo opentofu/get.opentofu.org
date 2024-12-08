@@ -1,8 +1,8 @@
 # OpenTofu distribution site
 
 This repository contains the source code for the `get.opentofu.org` distribution site. It is deployed on Cloudflare
-Pages. The installation scripts are located in [`src/install-opentofu.sh`](src/install-opentofu.sh) (POSIX) and [`src/install-opentofu.ps1`](src/install-opentofu.ps1) (Powershell). The Cloudflare function managing the MIME type assignment is located in
-[`src/functions/index.ts`](src/functions/index.ts).
+Pages. The installation scripts are located in [`static/install-opentofu.sh`](static/install-opentofu.sh) (POSIX) and [`static/install-opentofu.ps1`](static/install-opentofu.ps1) (Powershell). The Cloudflare function managing the MIME type assignment is located in
+[`functions/index.ts`](functions/index.ts).
 
 ## Testing the script
 
@@ -30,6 +30,6 @@ You can test the site locally using wrangler if you have NodeJS/NPM installed:
 
 ```
 npm i
-cd src
+cd static
 npx wrangler pages dev .
 ```
