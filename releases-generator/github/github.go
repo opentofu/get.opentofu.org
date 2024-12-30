@@ -3,6 +3,7 @@ package github
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -59,11 +60,48 @@ type client struct {
 }
 
 func (c client) GetReleases() (ReleasesResponse, error) {
-	req, err := http.NewRequest(
-		"GET",
-		"https://api.github.com/repos/opentofu/opentofu/releases",
-		nil,
-	)
+	const maxPerPage = 100
+
+	var pageNumber = 1
+	var releases ReleasesResponse
+
+	for {
+		pageReleases, err := c.getReleasesPerPage(pageNumber, maxPerPage)
+		if err != nil {
+			return nil, err
+		}
+
+		releases = append(releases, pageReleases...)
+
+		if len(pageReleases) < maxPerPage {
+			break
+		}
+
+		pageNumber++
+	}
+
+	return releases, nil
+}
+
+var (
+	errInvalidPageNumber = errors.New("page number is invalid")
+	errInvalidMaxPerPage = errors.New("max items per page is invalid")
+)
+
+func (c client) getReleasesPerPage(pageNumber, maxPerPage int) (ReleasesResponse, error) {
+	if pageNumber < 1 {
+		return nil, fmt.Errorf("%w: %v", errInvalidPageNumber, pageNumber)
+	}
+
+	if maxPerPage < 1 || maxPerPage > 100 {
+		return nil, fmt.Errorf("%w: %v", errInvalidMaxPerPage, maxPerPage)
+	}
+
+	const baseURL = "https://api.github.com/repos/opentofu/opentofu/releases"
+
+	paginatedURL := fmt.Sprintf("%v?page=%v&per_page=%v", baseURL, pageNumber, maxPerPage)
+
+	req, err := http.NewRequest("GET", paginatedURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
