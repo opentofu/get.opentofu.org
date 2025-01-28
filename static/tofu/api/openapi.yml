@@ -61,7 +61,7 @@ paths:
         - Signing key
       responses:
         '200':
-          description: Returns the ASCII-armored GPG key use for signing OpenTofu binaries.
+          description: Returns the ASCII-armored GPG key used for signing OpenTofu binaries.
           content:
             application/pgp-keys: {}
   /opentofu.gpg:
@@ -72,7 +72,7 @@ paths:
         - Signing key
       responses:
         '200':
-          description: Returns the binary GPG key use for signing OpenTofu binaries.
+          description: Returns the binary GPG key used for signing OpenTofu binaries.
           content:
             application/octet-stream: {}
   /tofu/api.json:
