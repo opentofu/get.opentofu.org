@@ -4,14 +4,14 @@ info:
   description: |-
     This API provides download information for OpenTofu.
   contact:
-    url: https://opentofu.org
+    url: https://opentofu.org/docs/intro/install/
   license:
     name: MPL-2.0
     url: https://raw.githubusercontent.com/opentofu/get.opentofu.org/refs/heads/main/LICENSE
   version: 1.0.0
 externalDocs:
-  description: OpenTofu installation docs
-  url: https://opentofu.org/docs/intro/install/
+  description: Documentation on verifying file integrity
+  url: https://opentofu.org/docs/intro/install/standalone/#verify-the-file-integrity
 servers:
   - url: https://get.opentofu.org
 tags:
@@ -251,7 +251,7 @@ components:
           type: array
           minimum: 1
           items:
-            title: File name
+            title: File name, referencing https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
             description: Individual files available through GitHub Releases at https://github.com/opentofu/opentofu/releases/download/v{version}/{filename} .
             externalDocs:
               description: OpenTofu documentation about verifying file integrity
