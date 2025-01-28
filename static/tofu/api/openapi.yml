@@ -45,7 +45,7 @@ paths:
   /install-opentofu.ps1:
     get:
       summary: Get the PowerShell install script
-      operationId: getPOSIXInstallScript
+      operationId: getPowerShellInstallScript
       tags:
         - Install script
       responses:
