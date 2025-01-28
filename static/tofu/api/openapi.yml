@@ -96,6 +96,7 @@ paths:
                     items:
                       $ref: "#/components/schemas/Version"
                   latest_versions:
+                    description: Latest versions in general, or for a major, or a major and minor version.
                     type: object
                     properties:
                       latest:
@@ -161,13 +162,14 @@ paths:
           description: Version number, version number fragment, or "latest".
       responses:
         '200':
-          description: List of files for this version or version fragmen as JSON.
+          description: List of files for this version or version fragment as JSON. All files refer to the GitHub link of https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
           content:
             application/json:
               schema:
                 type: array
                 minimum: 1
                 items:
+                  title: File name referencing https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
                   type: string
                   minimum: 1
                   example: tofu_1.6.0_SHA256SUMS
@@ -230,7 +232,7 @@ paths:
           description: Version number, version number fragment, or "latest".
       responses:
         '200':
-          description: List of files for this version or version fragment, separated by a newline. All files refer to the GitHub link of https://github.com/opentofu/opentofu/releases/download/v{version}/{filename} .
+          description: List of files for this version or version fragment, separated by a newline. All files refer to the GitHub link of https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
           content:
             text/plain:
               example: |
@@ -251,8 +253,8 @@ components:
           type: array
           minimum: 1
           items:
-            title: File name, referencing https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
-            description: Individual files available through GitHub Releases at https://github.com/opentofu/opentofu/releases/download/v{version}/{filename} .
+            title: File name referencing https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
+            description: Individual files available through GitHub Releases at https://github.com/opentofu/opentofu/releases/download/v{version}/{filename}
             externalDocs:
               description: OpenTofu documentation about verifying file integrity
               url: https://opentofu.org/docs/intro/install/standalone/#verify-the-file-integrity
