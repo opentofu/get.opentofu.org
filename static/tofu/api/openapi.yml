@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: OpenTofu Download API
+  description: |-
+    This API provides download information for OpenTofu.
+  contact:
+    url: https://opentofu.org
+  license:
+    name: MPL-2.0
+    url: https://raw.githubusercontent.com/opentofu/get.opentofu.org/refs/heads/main/LICENSE
+  version: 1.0.0
+externalDocs:
+  description: OpenTofu installation docs
+  url: https://opentofu.org/docs/intro/install/
+servers:
+  - url: https://get.opentofu.org
+tags:
+  - name: Install script
+  - name: Signing key
+  - name: JSON
+  - name: Text
+paths:
+  /:
+    get:
+      summary: Get the install script
+      operationId: getInstallScript
+      tags:
+        - Install script
+      responses:
+        '200':
+          description: Returns the POSIX or PowerShell script for installing OpenTofu, depending on the User-Agent.
+          content:
+            text/x-shellscript: {}
+  /install-opentofu.sh:
+    get:
+      summary: Get the POSIX install script
+      operationId: getPOSIXInstallScript
+      tags:
+        - Install script
+      responses:
+        '200':
+          description: Returns the POSIX shell script for installing OpenTofu. Run ./install-opentofu.sh --help for usage details.
+          content:
+            text/x-shellscript: {}
+  /install-opentofu.ps1:
+    get:
+      summary: Get the PowerShell install script
+      operationId: getPOSIXInstallScript
+      tags:
+        - Install script
+      responses:
+        '200':
+          description: Returns the PowerShell shell script for installing OpenTofu. Run &"install-opentofu.ps1" -help for usage details.
+          content:
+            text/x-shellscript: {}
+  /opentofu.asc:
+    get:
+      summary: Get OpenTofu signing key (ASCII-armored)
+      operationId: getSigningKeyArmored
+      tags:
+        - Signing key
+      responses:
+        '200':
+          description: Returns the ASCII-armored GPG key use for signing OpenTofu binaries.
+          content:
+            application/pgp-keys: {}
+  /opentofu.gpg:
+    get:
+      summary: Get OpenTofu signing key
+      operationId: getSigningKey
+      tags:
+        - Signing key
+      responses:
+        '200':
+          description: Returns the binary GPG key use for signing OpenTofu binaries.
+          content:
+            application/octet-stream: {}
+  /tofu/api.json:
+    get:
+      summary: Get full version list
+      description: Get the full OpenTofu version list in JSON format.
+      operationId: getAllVersionsJSON
+      tags:
+        - JSON
+      responses:
+        '200':
+          description: Full version list in JSON format.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    description: "All OpenTofu versions, in the order of release."
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Version"
+                  latestVersions:
+                    type: object
+                    properties:
+                      latest:
+                        $ref: "#/components/schemas/Version"
+                      1:
+                        $ref: "#/components/schemas/Version"
+                    additionalProperties:
+                      $ref: "#/components/schemas/Version"
+                    required:
+                      - "latest"
+                      - "1"
+                    example:
+                      latest:
+                        id: 1.6.0-alpha1
+                        files: ["tofu_1.6.0_SHA256SUMS"]
+                      1:
+                        id: 1.6.0-alpha1
+                        files: ["tofu_1.6.0_SHA256SUMS"]
+                      1.6:
+                        id: 1.6.0-alpha1
+                        files: ["tofu_1.6.0_SHA256SUMS"]
+                required:
+                  - versions
+                  - latestVersions
+  /tofu/api/{version}.version.json:
+    get:
+      summary: Get version ID
+      operationId: getLatestVersionIDJSON
+      tags:
+        - JSON
+      parameters:
+        - in: path
+          name: version
+          schema:
+            type: string
+            pattern: ^(latest|\d+(|\.\d+(|\.\d+(|-(alpha|beta|rc)\d+))))$
+            example: "1.6"
+          required: true
+          description: Version number, version number fragment, or "latest".
+      responses:
+        '200':
+          description: Version ID in JSON format.
+          content:
+            application/json:
+              schema:
+                type: string
+                pattern: ^\d{1,3}\.\d{1,3}\.\d{1,3}(|-alpha\d{1,3}|-beta\d{1,3}|-rc\d{1,3})$
+                example: 1.6.0-alpha1
+  /tofu/api/{version}.files.json:
+    get:
+      summary: Get the files for a version
+      operationId: getLatestVersionFilesJSON
+      tags:
+        - JSON
+      parameters:
+        - in: path
+          name: version
+          schema:
+            type: string
+            pattern: ^(latest|\d+(|\.\d+(|\.\d+(|-(alpha|beta|rc)\d+))))$
+            example: "1.6"
+          required: true
+          description: Version number, version number fragment, or "latest".
+      responses:
+        '200':
+          description: List of files for this version or version fragmen as JSON.
+          content:
+            application/json:
+              schema:
+                type: array
+                minimum: 1
+                items:
+                  type: string
+                  minimum: 1
+                  example: tofu_1.6.0_SHA256SUMS
+              example:
+                - tofu_1.6.0_SHA256SUMS
+                - tofu_1.6.0_SHA256SUMS.sig
+                - tofu_1.6.0_SHA256SUMS.pem
+                - ...
+  /tofu/api.txt:
+    get:
+      summary: Get full version list
+      description: Get the full OpenTofu version list in text format.
+      operationId: getAllVersionsText
+      tags:
+        - Text
+      responses:
+        '200':
+          description: All OpenTofu versions, one per line, in the order of release.
+          content:
+            text/plain:
+              example: |
+                1.6.0
+                1.6.0-rc1
+                ...
+  /tofu/api/{version}.version.txt:
+    get:
+      summary: Get version ID
+      operationId: getLatestVersionIDText
+      tags:
+        - Text
+      parameters:
+        - in: path
+          name: version
+          schema:
+            type: string
+            pattern: ^(latest|\d+(|\.\d+(|\.\d+(|-(alpha|beta|rc)\d+))))$
+            example: "1.6"
+          required: true
+          description: Version number, version number fragment, or "latest".
+      responses:
+        '200':
+          description: Successful
+          content:
+            text/plain:
+              example: 1.6.0-alpha1
+  /tofu/api/{version}.files.txt:
+    get:
+      summary: Get the files for a version
+      operationId: getLatestVersionFilesText
+      tags:
+        - Text
+      parameters:
+        - in: path
+          name: version
+          schema:
+            type: string
+            pattern: ^(latest|\d+(|\.\d+(|\.\d+(|-(alpha|beta|rc)\d+))))$
+            example: "1.6"
+          required: true
+          description: Version number, version number fragment, or "latest".
+      responses:
+        '200':
+          description: List of files for this version or version fragment, separated by a newline. All files refer to the GitHub link of https://github.com/opentofu/opentofu/releases/download/v{version}/{filename} .
+          content:
+            text/plain:
+              example: |
+                tofu_1.6.0_SHA256SUMS
+                tofu_1.6.0_SHA256SUMS.sig
+                tofu_1.6.0_SHA256SUMS.pem
+                ...
+components:
+  schemas:
+    Version:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: ^\d{1,3}\.\d{1,3}\.\d{1,3}(|-alpha\d{1,3}|-beta\d{1,3}|-rc\d{1,3})$
+          example: 1.6.0-alpha1
+        files:
+          type: array
+          minimum: 1
+          items:
+            title: File name
+            description: Individual files available through GitHub Releases at https://github.com/opentofu/opentofu/releases/download/v{version}/{filename} .
+            externalDocs:
+              description: OpenTofu documentation about verifying file integrity
+              url: https://opentofu.org/docs/intro/install/standalone/#verify-the-file-integrity
+            type: string
+            minimum: 1
+            example: tofu_1.6.0_SHA256SUMS
+      required:
+        - id
+        - files

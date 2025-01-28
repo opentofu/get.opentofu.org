@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/opentofu/get.opentofu.org/releases-generator/github"
 )
@@ -51,6 +52,39 @@ func (g *generator) Generate() (map[string][]byte, error) {
 	}
 
 	for _, version := range index.Versions {
+		// Shell script friendly output:
+		versionFiles := []string{
+			version.ID,
+		}
+		if len(strings.Split(version.ID, "-")) == 1 {
+			// Only do this for non-prereleases
+			parts := strings.Split(version.ID, ".")
+			versionFiles = append(
+				versionFiles,
+				"latest",
+				parts[0],
+				parts[0]+"."+parts[1],
+			)
+		}
+		for _, ver := range versionFiles {
+			if _, ok := result["api/"+ver+".version.txt"]; ok {
+				continue
+			}
+			versionIDJSON, err := json.Marshal(version.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal version ID API file for %s: %w", version.ID, err)
+			}
+			versionFilesJSON, err := json.Marshal(version.Files)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal version files API file for %s: %w", version.ID, err)
+			}
+
+			result["api/"+ver+".version.txt"] = []byte(version.ID)
+			result["api/"+ver+".version.json"] = versionIDJSON
+			result["api/"+ver+".files.txt"] = []byte(strings.Join(version.Files, "\n"))
+			result["api/"+ver+".files.json"] = versionFilesJSON
+		}
+
 		result[version.ID+"/index.html"], err = renderTemplate(releaseTemplate, version)
 		if err != nil {
 			return nil, fmt.Errorf("failed to render release template for version %s: %w", version.ID, err)
