@@ -8,8 +8,8 @@ import (
 
 // Index holds all data for all versions.
 type Index struct {
-	Versions []Version          `json:"versions"`
-	Latest   map[string]Version `json:"latest"`
+	Versions       []Version          `json:"versions"`
+	LatestVersions map[string]Version `json:"latest_versions"`
 }
 
 // Version holds the file list for a single version.
@@ -23,8 +23,8 @@ func githubResponseToIndex(response github.ReleasesResponse) *Index {
 		return &Index{Versions: nil}
 	}
 	result := &Index{
-		Versions: make([]Version, len(response)),
-		Latest:   make(map[string]Version),
+		Versions:       make([]Version, len(response)),
+		LatestVersions: make(map[string]Version),
 	}
 	for i, release := range response {
 		ver := strings.TrimLeft(release.TagName, "v")
@@ -54,8 +54,8 @@ func githubResponseToIndex(response github.ReleasesResponse) *Index {
 			parts[0],
 			parts[0] + "." + parts[1],
 		} {
-			if _, ok := result.Latest[latest]; !ok {
-				result.Latest[latest] = verStruct
+			if _, ok := result.LatestVersions[latest]; !ok {
+				result.LatestVersions[latest] = verStruct
 			}
 		}
 	}

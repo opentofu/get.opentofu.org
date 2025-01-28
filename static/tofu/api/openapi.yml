@@ -95,7 +95,7 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Version"
-                  latestVersions:
+                  latest_versions:
                     type: object
                     properties:
                       latest:
@@ -119,7 +119,7 @@ paths:
                         files: ["tofu_1.6.0_SHA256SUMS"]
                 required:
                   - versions
-                  - latestVersions
+                  - latest_versions
   /tofu/api/{version}.version.json:
     get:
       summary: Get version ID
