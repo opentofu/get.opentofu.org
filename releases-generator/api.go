@@ -51,8 +51,10 @@ func (g *generator) Generate() (map[string][]byte, error) {
 		return nil, fmt.Errorf("failed to render the index.html file: %w", err)
 	}
 
-	for _, version := range index.Versions {
+	versionIDList := make([]string, len(index.Versions))
+	for i, version := range index.Versions {
 		// Shell script friendly output:
+		versionIDList[i] = version.ID
 		versionFiles := []string{
 			version.ID,
 		}
@@ -90,5 +92,6 @@ func (g *generator) Generate() (map[string][]byte, error) {
 			return nil, fmt.Errorf("failed to render release template for version %s: %w", version.ID, err)
 		}
 	}
+	result["api.txt"] = []byte(strings.Join(versionIDList, "\n"))
 	return result, nil
 }
