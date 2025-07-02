@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // ReleasesResponse contains all releases fetched from GitHub.
@@ -13,8 +14,10 @@ type ReleasesResponse []Release
 
 // Release describes a single release on GitHub.
 type Release struct {
-	TagName string  `json:"tag_name"`
-	Assets  []Asset `json:"assets"`
+	TagName     string    `json:"tag_name"`
+	PublishedAt time.Time `json:"published_at"`
+	IsDraft     bool      `json:"draft"`
+	Assets      []Asset   `json:"assets"`
 }
 
 // Asset describes a single asset.
