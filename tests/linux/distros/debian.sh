@@ -1,3 +1,3 @@
 #!/bin/bash
 
-export IMAGE=debian:buster
+export IMAGE=debian:stable
