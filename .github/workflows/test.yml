@@ -51,7 +51,17 @@ jobs:
       matrix:
         distro: [alpine, debian, fedora, opensuse, rocky, ubuntu]
         method: [brew, repo, standalone]
-        shell: [ash, bash, dash, ksh, zsh]
+        shell: [bash, dash, ksh, zsh]
+        exclude:
+          # Some combinations are just stubbed out as "unsupported" in our
+          # scripts, so we'll exclude them out here too so we don't waste
+          # GitHub Actions worker resources just doing a no-op.
+          - distro: rocky
+            shell: dash
+          - distro: alpine
+            shell: ksh
+          - distro: alpine
+            method: brew
     steps:
       - name: Checkout
         uses: actions/checkout@v4
