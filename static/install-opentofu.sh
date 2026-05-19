@@ -621,7 +621,7 @@ EOF
       return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
     fi
   done
-  if ! as_root ${YUM_COMMAND} install -y tofu; then
+  if ! as_root "${YUM_COMMAND}" install -y tofu; then
     log_error "Failed to install tofu via ${YUM_COMMAND}."
     return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
   fi
