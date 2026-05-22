@@ -39,10 +39,15 @@ func (g *generator) Generate() (map[string][]byte, error) {
 		return nil, fmt.Errorf("failed to fetch GitHub releases: %w", err)
 	}
 	index := githubResponseToIndex(releases)
+	seriesIndex := githubResponseToSeriesSummary(releases)
 
 	result["api.json"], err = json.Marshal(index)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal releases API file: %w", err)
+	}
+	result["series.json"], err = json.MarshalIndent(seriesIndex, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal release series API file: %w", err)
 	}
 
 	result["index.html"], err = renderTemplate(indexTemplate, index)
